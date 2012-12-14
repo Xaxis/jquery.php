@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>jQuery PHP - Demo</title>
+<script type="text/javascript" src="lib/jquery-1.8.3.min.js"></script>
+<script type="text/javascript" src="lib/jqueryphp.js"></script>
+<style>
+body {
+	margin: 40px;
+}
+.results { 
+	border:1px dashed red;
+	width:100%;
+}
+</style>
+</head>
+<script>
+$(document).ready(function() {
+	
+	// Initialize our path
+	JPHP.path = "http://www.mydomain.com/jqueryphp/lib/func_request.php";
+	
+	// Example of calling the PHP strlen() function
+	$("#results1").php('strlen', function(data, self) {
+		$(self).html(data);
+	}, 'A test string!');
+	
+	// Example of calling the PHP phpinfo() function
+	$("#results2").php('phpinfo', function(data, self) {
+		$(self).html(data);
+	});
+	
+});
+</script>
+<body>
+<b>Demo of jqueryphp:</b>
+Returned results from the PHP strlen() function
+<div id="results1" class="results"></div>
+<br>
+Returned results from the PHP phpinfo() function
+<div id="results2" class="results"></div>
+</body>
+</html>
