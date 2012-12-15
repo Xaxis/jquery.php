@@ -2,16 +2,17 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>jQuery PHP - Demo</title>
+<title>jQuery PHP</title>
 <script type="text/javascript" src="lib/jquery-1.8.3.min.js"></script>
 <script type="text/javascript" src="lib/jqueryphp.js"></script>
 <style>
 body {
-	margin: 40px;
+	margin:40px;
 }
 .results { 
-	border:1px dashed red;
+	border:1px dashed green;
 	width:100%;
+	margin-bottom:10px;
 }
 </style>
 </head>
@@ -19,26 +20,47 @@ body {
 $(document).ready(function() {
 	
 	// Initialize our path
-	JPHP.path = "http://www.mydomain.com/jqueryphp/lib/func_request.php";
+	$.fn.php('init', {'path': 'http://www.mydomain.com/jqueryphp/lib/func_request.php'});
 	
 	// Example of calling the PHP strlen() function
 	$("#results1").php('strlen', function(data, self) {
 		$(self).html(data);
 	}, 'A test string!');
 	
-	// Example of calling the PHP phpinfo() function
+	/*
+	 * Example of calling a disabled PHP function while also
+	 * demonstrating jQuery's method chaining is still in tact.
+	 */
 	$("#results2").php('phpinfo', function(data, self) {
+		$(self).html(data);
+	}).css({border: '1px dashed red'});
+	
+	// Example of calling highlight_string()
+	$("#results3").php('highlight_string', function(data, self) {
+		$(self).html(data);
+	}, "<?php phpinfo(); ?>");
+	
+	/*
+	 * Example demonstrating the usage of jQuery.php's exec
+	 * method to pass PHP code to the backend and return the
+	 * result. This method is disabled by default.
+	 */
+	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
+	$("#results4").php('exec', code, function(data, self) {
 		$(self).html(data);
 	});
 	
 });
 </script>
 <body>
-<b>Demo of jqueryphp:</b>
+<p><b>jQuery.php Demonstrations:</b></p>
 Returned results from the PHP strlen() function
 <div id="results1" class="results"></div>
-<br>
-Returned results from the PHP phpinfo() function
+Example of calling a disabled PHP function
 <div id="results2" class="results"></div>
+Returned results from the PHP strlen() function
+<div id="results3" class="results"></div>
+Returned results using jQuery.php's 'exec' method.
+<div id="results4" class="results"></div>
 </body>
 </html>
