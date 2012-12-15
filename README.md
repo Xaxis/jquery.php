@@ -1,18 +1,22 @@
 jqueryphp
 =========
 
-A simple jQuery plugin that allows you to make PHP function calls.
+The primary intention of this plugin is to allow for calling PHP
+functions from within JavaScript.
 
-The intention of this plugin is to allow for the calling of PHP
-functions from JavaScript in cases which latency is not an issue.
+Secondarily, when the 'exec' feature is enabled, users of this
+plugin can execute arbitrary PHP code written within JavaScript.
 
-The plugin makes no assumptions regarding which functions are 
-called nor what arguments are passed to them. In other words, it
-is the responsibillity of the user to handle security concerns.
+The usage of this plugin is advised in contexts where latency is
+not an issue and direct access to PHP functionality within JavaScript
+would prove very useful.
+
+This plugin makes few assumptions regarding which functions can
+be called. Therefore it is the responsibillity of the user to handle
+security concerns.
 
 This plugin assumes that the user knows how many arguments should
-be passed to a given PHP function. Error handling is not accounted 
-for.
+be passed to a given PHP function.
 
 Usage:
 
@@ -21,31 +25,38 @@ latest revision of jqueryphp.js in the head of your page file.
 
 2) You must initialize the path of the backend PHP function request
 handler file before using the extension:
-  
-	JPHP.path = "http://www.mydomain.com/jqueryphp/lib/func_request.php";
+	
+	$.fn.php('init', {'path': 'http://www.mydomain.com/jqueryphp/lib/func_request.php'});
 	
 In the above we assign the path to our backend handler file and we're 
 ready to start using the plugin.
 
-3) The first argument passed must be the PHP function name that you
-wish to call. The second argument must be the callback function which
-has the code to handle the response from the server. The remaining 
-arguments passed (if any) are the parameters you wish to pass to the
-PHP function on the backend:
+3) You can call PHP functions in a few different ways. Since it is
+assumed that the primary usage of the plugin is to call PHP functions
+providing the .php() method the 'call' parameter is not required:
 
 	$("#results").php('strlen', function(data, self) {
 		$(self).html(data);
 	}, 'teststring');
 	
-In the above notice the two arguments data and self. Each time when
-defining a callback for the plugin you must pass data and self. The 
-data argument contains the servers response data and the self argument
-is just a reference to the 'this' context of the elements that you're
-calling with your initial jQuery selector.
+With that in mind, passing 'call' as the first paramter is acceptable:
+
+	$("#results").php('call', 'strlen', function(data, self) {
+		$(self).html(data);
+	}, 'teststring');
 	
-4) That's all for now. Please remember that this plugin can introduce
-some serious security vulnerabilities due to the fact you're allowing
-frontend clients to request PHP functions and pass those functions 
-data on the server. It is advised that you create a function request
-exception list, designed to only allow the functions you want to be
-accessible to be called.
+The 'data' and 'self' arguments must be passed to the callback function.
+The 'data' argument contains the servers response data to your requested
+function call. The 'self' argument is just a reference to the 'this' context
+of the DOM element(s) that you're selecting with jQuery.
+	
+4) The secondary capacity of the plugin allows for the execution of 
+arbitrary code strings written in PHP within JavaScript:
+	
+	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
+	$("#results4").php('exec', code, function(data, self) {
+		$(self).html(data);
+	});
+	
+This functionality is disabled by default for it introduces some obvious
+security issues.
