@@ -9,15 +9,15 @@
  */
 $config = array(
 	'EXEC' 			=> false,
-	'EXCLUSIVE'		=> true
+	'SEC_MODE'		=> 'blacklist'
 );
 
 /*
- * The exclusion_list array is used when the EXCLUSIVE configuration
- * variable is set to true. In such a case all PHP functions are 
- * allowed except those found in the array.
+ * The blacklist array is used when the SEC_MODE configuration
+ * variable is set to blacklist. In such a case all PHP functions 
+ * are allowed except those found in the array.
  */
-$exclusion_list = array(
+$blacklist = array(
 	'`',
 	'create_function',
 	'escapeshellcmd',
@@ -35,11 +35,11 @@ $exclusion_list = array(
 );
 
 /*
- * The inclusion_list array is used when the EXCLUSIVE configuration
- * variable is set to false. In such a case all PHP functions are
+ * The whitelist array is used when the EXCLUSIVE configuration
+ * variable is set to whitelist. In such a case all PHP functions are
  * disallowed except for those found in the array.
  */
-$inclusion_list = array(
+$whitelist = array(
 	// 'strlen',			// (e.g. Allowing the strlen function)
 	// 'highlight_string'	// (e.g. Etc...)
 );
@@ -71,19 +71,19 @@ if ( $method_request ) {
 			 * Based on the EXCLUSIVE configuration variable we attempt to
 			 * build our function call.
 			 */
-			switch ( $config['EXCLUSIVE'] ) {
-				case true :
+			switch ( $config['SEC_MODE'] ) {
+				case 'blacklist' :
 					if ( function_exists($func_request) 
-							&& !in_array($func_request, $exclusion_list) ) {
+							&& !in_array($func_request, $blacklist) ) {
 						$function = $func_request;
 					} else {
 						$function = false;
 					}
 					break;
 					
-				case false :
+				case 'whitelist' :
 					if ( function_exists($func_request) 
-							&& in_array($func_request, $inclusion_list) ) {
+							&& in_array($func_request, $whitelist) ) {
 						$function = $func_request;
 					} else {
 						$function = false;
