@@ -1,4 +1,6 @@
 <?php
+error_reporting(0); 
+
 /*
  * While the jqueryphp plugin allows for the execution of 
  * arbitrary code via the 'exec' method, this functionality
@@ -8,7 +10,7 @@
  * data without proper validation in place.
  */
 $config = array(
-	'EXEC' 			=> false,
+	'EXEC' 			=> true,
 	'SEC_MODE'		=> 'blacklist'
 );
 
