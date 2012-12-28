@@ -1,7 +1,7 @@
 jqueryphp
 =========
 
-The primary intention of this plugin is to allow for calling PHP
+The primary intention of this plugin is to allow for easy calling of core PHP
 functions from within JavaScript.
 
 The usage of this plugin is advised in contexts where latency is
