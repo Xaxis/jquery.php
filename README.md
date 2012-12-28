@@ -4,9 +4,6 @@ jqueryphp
 The primary intention of this plugin is to allow for calling PHP
 functions from within JavaScript.
 
-Secondarily, when the 'exec' feature is enabled, users of this
-plugin can execute arbitrary PHP code written within JavaScript.
-
 The usage of this plugin is advised in contexts where latency is
 not an issue and direct access to PHP functionality within JavaScript
 would prove very useful.
@@ -49,6 +46,41 @@ The 'data' and 'self' arguments must be passed to the callback function.
 The 'data' argument contains the servers response data to your requested
 function call. The 'self' argument is just a reference to the 'this' context
 of the DOM element(s) that you're selecting with jQuery.
+
+We can also pass an object containing name value pairs of functions and
+parameters to be executed in sequential order like so:
+
+	$("#results").php({
+		abs : [-884],
+		cosh : [23],
+		sqrt : [43],
+		pi : [700],
+		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
+		date : ["DATE_RFC822"]
+		}, function(data, self) { 
+			$(self).append("<div>" + data + "</div>");
+	});
+	
+When doing so we only pass our function/param object and our callback. Passing
+extra parameters will have no effect.
+
+Things get really interesting when we use the method chaining pattern when calling
+our PHP functions. When using jqueryphp in this manner, only one parameter is passed.
+The returned result from the first function is passed to the next and so on down the
+chain.
+
+	$("#results6").php(function chain(data, self) {
+		$(self).append("<div>" + data + "</div>");
+	}, -138)
+		.abs() 
+		.decbin()
+		.decbin()
+		.bindec()
+		.sqrt()
+		.tan()
+		.abs()
+		.round();
+
 	
 4) The secondary capacity of the plugin allows for the execution of 
 arbitrary code strings written in PHP within JavaScript:
