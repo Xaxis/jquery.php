@@ -13,54 +13,108 @@ body {
 	border:1px dashed green;
 	width:100%;
 	margin-bottom:10px;
+	font-family:"Courier New", Courier, monospace;
+	font-weight:bold;
 }
 </style>
 </head>
 <script>
 $(document).ready(function() {
 	
-	// Initialize our path
-	$.fn.php('init', {'path': 'http://www.mydomain.com/jqueryphp/lib/func_request.php'});
+	// Initialization options
+	$.fn.php('init', 
+		{
+			'path': 'http://www.williamneeley.com/code/jqueryphp/lib/func_request.php',
+			'chaining': true
+		});
 	
 	// Example of calling the PHP strlen() function
 	$("#results1").php('strlen', function(data, self) {
 		$(self).html(data);
 	}, 'A test string!');
 	
-	/*
-	 * Example of calling a disabled PHP function while also
-	 * demonstrating jQuery's method chaining is still in tact.
-	 */
-	$("#results2").php('phpinfo', function(data, self) {
-		$(self).html(data);
-	}).css({border: '1px dashed red'});
-	
 	// Example of calling highlight_string()
 	$("#results3").php('highlight_string', function(data, self) {
 		$(self).html(data);
 	}, "<?php phpinfo(); ?>");
 	
-	/*
-	 * Example demonstrating the usage of jQuery.php's exec
-	 * method to pass PHP code to the backend and return the
-	 * result. This method is disabled by default.
+	/* Example demonstrating the usage of jQuery.php's exec method to 
+	 * pass PHP code to the backend and return the result. This method 
+	 * is disabled by default.
 	 */
 	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
 	$("#results4").php('exec', code, function(data, self) {
 		$(self).html(data);
 	});
 	
+	/* This is an example of calling multiple consecutive functions
+	 * as an object passing the function name as they key and then
+	 * an array of values pertaining to a given functions parameters.
+	 * When functions are called in this manner requests are sent to 
+	 * the server synchronously.
+	 */
+	$("#results5").php({
+		abs : [-884],
+		cosh : [23],
+		sqrt : [43],
+		pi : [700],
+		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
+		date : ["DATE_RFC822"]
+		}, function(data, self) { 
+			$(self).append("<div>" + data + "</div>");
+	});
+	
+	/* This is an example of calling PHP functions using a function
+	 * chaining pattern. It is imperative that we pass our callback
+	 * argument as the first argument to .php. In addition, it naming
+	 * the callback function 'chain' is required.
+	 */
+	$("#results6").php(function chain(data, self) {
+		$(self).append("<div>" + data + "</div>");
+	}, -138)
+		.abs() 
+		.decbin()
+		.decbin()
+		.bindec()
+		.sqrt()
+		.tan()
+		.abs()
+		.round();
+		
+	/* 
+	 */
+	$("#results7").php(function chain(data, self) {
+		$(self).append("<div>" + data + ", </div>");
+	}, '<div id="results2" class="results"></div>')
+		.htmlentities()
+		.str_word_count()
+		.highlight_string()
+		.sha1();
+			
 });
 </script>
 <body>
 <p><b>jQuery.php Demonstrations:</b></p>
+
 Returned results from the PHP strlen() function
 <div id="results1" class="results"></div>
+
 Example of calling a disabled PHP function
 <div id="results2" class="results"></div>
+
 Returned results from the PHP strlen() function
 <div id="results3" class="results"></div>
+
 Returned results using jQuery.php's 'exec' method.
 <div id="results4" class="results"></div>
+
+Calling multiple PHP functions as an object.
+<div id="results5" class="results"></div>
+
+Calling PHP functions as a chain (test 1).
+<div id="results6" class="results"></div>
+
+Calling PHP functions as a chain (test 2). <br>
+<div id="results7" class="results"></div>
 </body>
 </html>
