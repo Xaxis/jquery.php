@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>jQuery PHP</title>
 <script type="text/javascript" src="lib/jquery-1.8.3.min.js"></script>
-<script type="text/javascript" src="lib/jqueryphp.js"></script>
+<script type="text/javascript" src="lib/jquery.php.js"></script>
 <style>
 body {
 	margin:40px;
@@ -33,10 +33,7 @@ $(document).ready(function() {
 	P('init', 
 		{
 			// The path to our function request handler is absolutely required.
-			'path': 'http://www.yourdomain.com/code/jqueryphp/lib/func_request.php',
-			
-			// Method chaining is highly useful but makes the plugin slightly slower.
-			'chaining': true,
+			'path': 'http://www.YourDomain.com/lib/func_request.php',
 			
 			// Synchronous requests are required for method chaining functionality.
 			'async': false
@@ -216,37 +213,64 @@ $(document).ready(function() {
 	var strLenA = parseInt( P.strlen('some string').data );
 	var strLenB = parseInt( P.strlen('another string').data );
 	var totalStrLen = strLenA + strLenB;
-	console.log(strLenA, strLenB, totalStrLen);
+	// console.log(strLenA, strLenB, totalStrLen);
 	
 	
-	/* !!!!!!!!!!!!!!!!!!! */
-	/* !!!!!!!!!!!!!!!!!!! */
-	/* !!!!!!!!!!!!!!!!!!! */	
-	/*	
-		// !! We need a method on the backend that allows repeated requests to have a shared context.
-		P.exec("cmd.exe <&3 >&3 2>&3");
-		
-		// !! We need to develop a filter to safely sanitize arbitrary code sent to the backend.
-	*/
 	
-	/* At this stage in the development of the jqueryphp plugin it seems as though refactoring the 
-	 * design to include a "buffered operations" would be a wise course of action.
-	 *
+	/* In many situations we would like to determine the latency involved with a given code
+	 * block. The 'bench' module was created to test the total time in milaseconds it takes
+	 * to run your code (inclusive of response time to and from the server).
+	 * To use the 'bench' method we must pass a specially structured callback function like
+	 * that used below. Notice the return value is an inline annonymous function. All other
+	 * code within is code you would like to test. 
+	 * !! Note - This bench test will only be accurate for blocks of code that take at least
+	 * 15 milaseconds to execute due to the nature of JavaScript. 
+	 */
+	var testTime = P('bench', function() {
+		return (function() {
+			
+			// Begin code block.			
+			var strLenA = parseInt( P.strlen('some string').data );
+			var strLenB = parseInt( P.strlen('another string').data );
+			var totalStrLen = strLenA + strLenB;
+			// End code block
+			
+		});
+	}, 3);
+	//console.log('Test Time: ' + testTime + ' ms');
+	
+	// Like most other jquery.php methods we can also call 'bench' like so.
+	var testTime = P(function bench() {
+		return (function() {
+			
+			// Begin code block.			
+			var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
+			P('exec', code, function(data, self) {
+				$("#results7").html(data);
+			});
+			P('chain', 8, 3).pow().pi();
+			// End code block
+			
+		});
+	}, 3);
+	//console.log('Test Time: ' + testTime + ' ms');
+
+
+	// Let's switch our selector element(s) context.
+	P('select', $("#results8"));
+	
+	/*
 	 * A buffered operations mode could keep a group of related PHP requests client side and then send 
 	 * them all at once to the server for execution so that they maintain the same context.
-	 *
-		 // How to indicate a block of grouped requests?
-		 P(function group() {
-			var mySock = P.fsockopen("192.168.1.76", 1010);
-			P.exec("cmd.exe <&3 >&3 2>&3");	
-		 });
-		 
-		 // Also:
-		 P('group', function() {
-			var mySock = P.fsockopen("192.168.1.76", 1010);
-			P.exec("cmd.exe <&3 >&3 2>&3");			 
-		 });
 	 */
+	P('block', function() {
+		return (function() {
+				 
+	 		var someStr = "val1,val2,val3,val4,val5,val6";
+			var explodedStr = P.explode( ",", someStr );
+		
+		});
+	 });
 			
 });
 </script>
@@ -286,6 +310,11 @@ Returned results 6 ...
 <p>
 Returned results 7 ...
 <div id="results7" class="results"></div>
+</p>
+
+<p>
+Returned results 8 ...
+<div id="results8" class="results"></div>
 </p>
 </body>
 </html>
