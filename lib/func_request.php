@@ -62,21 +62,21 @@ if ( $method_request ) {
 		 * regardless of whether they are native or user defined.
 		 */
 		case 'call' :
-			/*
-			 * We receive the function requested and arguments that
+			
+			/* We receive the function requested and arguments that
 			 * are to be passed to it.
 			 */
 			$func_request = $_POST['func'] ? $_POST['func'] : false;
 			$func_args = $_POST['args'] ? $_POST['args'] : false;
 			
 			/*
-			 * Based on the EXCLUSIVE configuration variable we attempt to
+			 * Based on the security mode configuration variable we attempt to
 			 * build our function call.
 			 */
 			switch ( $config['SEC_MODE'] ) {
 				case 'blacklist' :
 					if ( function_exists($func_request) 
-							&& !in_array($func_request, $blacklist) ) {
+						 && !in_array($func_request, $blacklist) ) {
 						$function = $func_request;
 					} else {
 						$function = false;
@@ -85,7 +85,7 @@ if ( $method_request ) {
 					
 				case 'whitelist' :
 					if ( function_exists($func_request) 
-							&& in_array($func_request, $whitelist) ) {
+						 && in_array($func_request, $whitelist) ) {
 						$function = $func_request;
 					} else {
 						$function = false;
@@ -93,20 +93,34 @@ if ( $method_request ) {
 					break;
 			}
 			
-			/*
-			 * Next we take our $func_args which should contain a JSON
+			/* Next we take our $func_args which should contain a JSON
 			 * encoded string and convert it into a PHP associative array.
 			 */
 			$args_arr = json_decode($func_args, false);
 			 
 			/*
-			 * If the user requested function exists and is allowed
-			 * we proceed to call that function, passing any arguments
-			 * given with the requested function.
+			 * If the user requested function exists and is allowed we proceed to call that function, 
+			 * passing any arguments given with the requested function.
 			 */
 			if ( $function !== false ) {
 				$call = $function;
-				echo call_user_func_array($call, $args_arr);
+				$result = call_user_func_array($call, $args_arr);
+				
+				// Next we need to determine the return type so we can send our data back to
+				// JavaScript in the correct format.
+				switch ( true ) {
+					case is_array( $result ) :
+						echo json_encode( $result );
+						break;
+						
+					case is_null( $result ) :
+						echo 'null';
+						break;
+						
+					default :
+						echo $result;
+				}
+	
 			}
 			break;
 		
