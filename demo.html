@@ -33,7 +33,7 @@ $(document).ready(function() {
 	P('init', 
 		{
 			// The path to our function request handler is absolutely required.
-			'path': 'http://www.williamneeley.com/code/jqueryphp/lib/func_request.php',
+			'path': 'http://www.yourdomain.com/code/jqueryphp/lib/func_request.php',
 			
 			// Method chaining is highly useful but makes the plugin slightly slower.
 			'chaining': true,
@@ -196,13 +196,33 @@ $(document).ready(function() {
 	
 	
 	
+	// Now let's switch our selector context to another div
+	P('select', $("#results6"));
+	
+	// Now let's define our callback.
+	P(function callback(data, self) {
+		$(self).append('<div style="1px dotted red">' + data + '</div>');
+	});
+
+
+
+	/* In many cases we will want to return data from a PHP function request to a Java-
+	 * script variable instead of a DOM element so we can further act on that data with
+	 * our JavaScript code.
+	 * We can do so easily by simply assinging our method call to a JavaScript variable and
+	 * accessing the .data property of the plugin as follows.
+	 * The returned data may need to be parsed based on type depending on what is returned.
+	 */
+	var strLenA = parseInt( P.strlen('some string').data );
+	var strLenB = parseInt( P.strlen('another string').data );
+	var totalStrLen = strLenA + strLenB;
+	console.log(strLenA, strLenB, totalStrLen);
+	
+	
 	/* !!!!!!!!!!!!!!!!!!! */
 	/* !!!!!!!!!!!!!!!!!!! */
 	/* !!!!!!!!!!!!!!!!!!! */	
-	/*
-		// !! We need to develop a way to return data directly into JavaScript variables.
-		var mySock = P.fsockopen("192.168.1.76", 1010);
-	
+	/*	
 		// !! We need a method on the backend that allows repeated requests to have a shared context.
 		P.exec("cmd.exe <&3 >&3 2>&3");
 		
