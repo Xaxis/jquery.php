@@ -32,11 +32,16 @@ $(document).ready(function() {
 	// Initialization options
 	P('init', 
 		{
-			// The path to our function request handler is absolutely required.
-			'path': 'http://www.YourDomain.com/lib/func_request.php',
+			// The path to our function request handler is absolutely required
+			'path': 'http://www.williamneeley.com/code/jqueryphp/lib/func_request.php',
 			
-			// Synchronous requests are required for method chaining functionality.
-			'async': false
+			// Synchronous requests are required for method chaining functionality
+			'async': false,
+			
+			// List any user defined functions in the manner prescribed here
+			'userFunctions': {
+
+			}
 		});
 	
 
@@ -222,18 +227,14 @@ $(document).ready(function() {
 	 * to run your code (inclusive of response time to and from the server).
 	 * To use the 'bench' method we must pass a specially structured callback function like
 	 * that used below. Notice the return value is an inline annonymous function. All other
-	 * code within is code you would like to test. 
-	 * !! Note - This bench test will only be accurate for blocks of code that take at least
-	 * 15 milaseconds to execute due to the nature of JavaScript. 
+	 * code within is code you would like to test.
 	 */
 	var testTime = P('bench', function() {
 		return (function() {
 			
-			// Begin code block.			
 			var strLenA = parseInt( P.strlen('some string').data );
 			var strLenB = parseInt( P.strlen('another string').data );
 			var totalStrLen = strLenA + strLenB;
-			// End code block
 			
 		});
 	}, 3);
@@ -242,14 +243,12 @@ $(document).ready(function() {
 	// Like most other jquery.php methods we can also call 'bench' like so.
 	var testTime = P(function bench() {
 		return (function() {
-			
-			// Begin code block.			
+				
 			var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
 			P('exec', code, function(data, self) {
 				$("#results7").html(data);
 			});
 			P('chain', 8, 3).pow().pi();
-			// End code block
 			
 		});
 	}, 3);
@@ -259,18 +258,56 @@ $(document).ready(function() {
 	// Let's switch our selector element(s) context.
 	P('select', $("#results8"));
 	
-	/*
-	 * A buffered operations mode could keep a group of related PHP requests client side and then send 
+	
+	
+	/* A buffered operations mode could keep a group of related PHP requests client side and then send 
 	 * them all at once to the server for execution so that they maintain the same context.
 	 */
+	/*
 	P('block', function() {
 		return (function() {
 				 
 	 		var someStr = "val1,val2,val3,val4,val5,val6";
-			var explodedStr = P.explode( ",", someStr );
+			
+			var explodedStr = P. explode( ",", explode );
+			
+			var explodedStr = P.tan( 66 );
+			
+			var explodedStr = P.abs ( -45 );
+			
+			var explodedStr = P.sin     ( 44 );
 		
 		});
-	 });
+	});
+	*/
+	
+	// OR
+	
+	// !! REFACTORING REQUIRED !!
+	// - The simplest option for parsing delayed block operation may be to pass a JSON block of function
+	// 	 requests and variables in a JSON format.
+	// - It may be less intuitive at first glance but from a programmatic stand point far easier to implement.
+	// - Either way the parsing logic will be required.
+	// - With that in mind it may simply be easier to expand the 'exec' mode with a backend "security filter"
+	//   that is capable of combining the whitelist/blacklist to restrict illegal function calls, detecting and
+	//	 preventing race conditions such as infinite loops, and other dangerous code sent from the frontend.
+	/*
+	P('block', 	{
+		$opts : {
+			http: {
+				method: "GET",
+				header: "Accept-language: en\r\n" +
+						"Cookie: foo=bar\r\n"
+			}
+		},
+		$context : {
+			stream_context_create: [this.$opts]
+		},
+		$file : {
+			file_get_contents: ['http://www.williamneeley.com/', false, this.$context]
+		}
+	});
+	*/
 			
 });
 </script>
