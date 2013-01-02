@@ -83,11 +83,17 @@ P('select', $("#results1"));
 The following are some simple usage scenarios. It should be noted that the examples below demonstrate
 multiple ways to do the same thing. In the usage scenarios below we are calling PHP's strlen function.
 
-```javascript
-// Passing the 'call' keyword is allowed but not required.
+```javascript	
+// The simplest way of calling your PHP function.
+P.strlen('I am a string.');
+
+// And of course we can return our string length to a variable.
+var strLen = P.strlen('I am a string.');
+
+// Passing the 'call' keyword is allowed but not required or necessary.
 P('call', 'strlen', 'A test string!');	
 	
-// Assinging your callback with the function name call is also possible (again not required).		
+// Naming your function name 'call' is also possible (but not required or necessary).		
 P(function call(data, self) {
 	$(self).append("<br><i>" + data + "</i>");
 }, 'strlen', 'A test string!');	
@@ -109,9 +115,6 @@ P('strlen', function(data, self) {
 $("#results1").php('strlen', function(data, self) {
 	$(self).append("<br><u style='color: green'>" + data + "</u>");
 }, 'This will be the longest string passed to strlen yet (plus one)!');
-	
-// Perhaps the simplest way of calling your PHP function.
-P.strlen('I am a string.');
 	
 // Calling your function while choosing a new selector context without setting a new callback.
 $("#results2").php('strlen', 'Yet another string!');
