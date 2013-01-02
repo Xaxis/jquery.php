@@ -24,6 +24,7 @@
 * Whitelist/Blacklist operations mode on PHP function calls
 * Wide range of design patterns for calling and using PHP functions
 * Great flexibility while working with returned results and the DOM
+* Automatic type conversion of returned results into JavaScript types
 
 ## EXAMPLES:
 
