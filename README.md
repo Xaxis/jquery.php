@@ -1,17 +1,16 @@
 #jQuery plugin for writing and using PHP within JavaScript
 ##A versitile jQuery plugin implementation
 
-	A versitile wrapper for using PHP in jQuery/JavaScript. Allows for quickly
-	writing web applications in multi-code situations. Now you can define and 
-	use your PHP functions directly within JavaScript. By default you can easily
-	gain access to all of PHP's core functions from your JavaScript without the
-	overhead of using JavaScript libraries to emulate PHP functions. See features 
-	section for more details on provided functionality.
+	A versitile wrapper for using PHP in jQuery/JavaScript. Allows for quickly writing web applications 
+	in multi-code situations. Now you can define and use your PHP functions directly within JavaScript. 
+	By default you can easily gain access to all of PHP's core functions from your JavaScript without the
+	overhead of using JavaScript libraries to emulate PHP functions. See features section for more details 
+	on provided functionality.
 
   Fork me @ https://github.com/Xaxis/jqueryphp
 
 ## REQUIREMENTS:
-* jQuery library (required - http://www.jquery.com)
+* jQuery library (http://www.jquery.com)
 
 ## FEATURES:
 * Access to PHP core functions as JavaScript methods
@@ -241,8 +240,8 @@ within is code you would like to test.
 var testTime = P('bench', function() {
 	return (function() {
 			
-		var strLenA = P.strlen('some string').data;
-		var strLenB = P.strlen('another string').data;
+		var strLenA = P.strlen('some string');
+		var strLenB = P.strlen('another string');
 		var totalStrLen = strLenA + strLenB;
 			
 });
