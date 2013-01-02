@@ -104,39 +104,7 @@ if ( $method_request ) {
 			 */
 			if ( $function !== false ) {
 				$call = $function;
-				$result = parse_type( call_user_func_array($call, $args_arr) );
-				
-				// Next we need to determine the return type so we can send our data back to
-				// JavaScript in the correct format.
-				/*
-				switch ( true ) {
-					case is_array( $result ) :
-						echo json_encode( $result );
-						break;
-						
-					case is_null( $result ) :
-						echo 'null';
-						break;
-						
-					case is_int( $result ) :
-						break;
-						
-					case is_float( $result ) :
-						break;
-						
-					case is_string( $result ) :
-						break;
-					
-					case is_object( $result ) :
-						break;
-						
-					default :
-						echo $result;
-				}
-				*/
-				
-				echo $result;
-	
+				echo parse_type( call_user_func_array($call, $args_arr) );
 			}
 			break;
 		
