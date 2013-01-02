@@ -104,10 +104,11 @@ if ( $method_request ) {
 			 */
 			if ( $function !== false ) {
 				$call = $function;
-				$result = call_user_func_array($call, $args_arr);
+				$result = parse_type( call_user_func_array($call, $args_arr) );
 				
 				// Next we need to determine the return type so we can send our data back to
 				// JavaScript in the correct format.
+				/*
 				switch ( true ) {
 					case is_array( $result ) :
 						echo json_encode( $result );
@@ -117,9 +118,24 @@ if ( $method_request ) {
 						echo 'null';
 						break;
 						
+					case is_int( $result ) :
+						break;
+						
+					case is_float( $result ) :
+						break;
+						
+					case is_string( $result ) :
+						break;
+					
+					case is_object( $result ) :
+						break;
+						
 					default :
 						echo $result;
 				}
+				*/
+				
+				echo $result;
 	
 			}
 			break;
@@ -130,17 +146,70 @@ if ( $method_request ) {
 		 */	
 		case 'exec' :
 			if ( $config['EXEC'] === true ) {
-				/*
-				 * We receive the code to be executed from the user.
-				 */
+				 
+				 // We receive code to be executed by the user
 				 $code_string = $_POST['code'] ? $_POST['code'] : false;
 				 
-				 echo eval( $code_string );
-			} else {
-				echo "Usage of the 'exec' method has been disabled.";
-			}
+				 // Prefix our code with return to prevent NULL from being returned.
+				 $result = eval( "return " . $code_string );
+				 
+				 echo parse_type( $result );
+			} 
 			break;
 	}
 
+}
+
+/**
+ * Detects the type of a returned result and parses data accordingly.
+ * @param {*} data Result data from a PHP function call.
+ * @return {Object} JSON encoded result data with type field.
+ */
+function parse_type( $data ) {
+	
+	$results = array(
+		'type' => '',
+		'data' => NULL
+	);
+	
+	switch ( true ) {
+			
+		case is_int( $data ) :
+			$type = 'int';
+			break;
+			
+		case is_float( $data ) :
+			$type = 'float';
+			break;
+			
+		case is_string( $data ) :
+			$type = 'string';
+			break;
+		
+		case is_object( $data ) :
+			$type = 'object';
+			break;
+			
+		case is_array( $data ) :
+			$type = 'array';
+			break;
+
+		case is_bool( $data ) :
+			$type = 'bool';
+			break;
+			
+		case is_null( $data ) :
+			$type = 'null';
+			break;
+			
+		default :
+			$type = 'default';
+	}
+	
+	$results['type'] = $type;
+	$results['data'] = $data;
+	
+	return json_encode( $results );
+	
 }
 ?>
