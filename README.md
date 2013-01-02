@@ -224,8 +224,8 @@ assinging our method call to a JavaScript variable and accessing the .data prope
 
 ```javascript
 // Here we calculate the total string length of a few strings
-var strLenA = parseInt( P.strlen('some string').data );
-var strLenB = parseInt( P.strlen('another string').data );
+var strLenA = P.strlen('some string');
+var strLenB = P.strlen('another string');
 var totalStrLen = strLenA + strLenB;
 console.log(strLenA, strLenB, totalStrLen);
 ```
@@ -241,8 +241,8 @@ within is code you would like to test.
 var testTime = P('bench', function() {
 	return (function() {
 			
-		var strLenA = parseInt( P.strlen('some string').data );
-		var strLenB = parseInt( P.strlen('another string').data );
+		var strLenA = P.strlen('some string').data;
+		var strLenB = P.strlen('another string').data;
 		var totalStrLen = strLenA + strLenB;
 			
 });
