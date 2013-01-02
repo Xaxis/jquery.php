@@ -196,7 +196,9 @@ $(document).ready(function() {
 	 */
 	P('chain', 8, 3).pow().pi();
 	
-	
+	// Let's see if our data can be returned to a JavaScript variable
+	var result = P('chain', 8, 3).pow().tan().abs().round();
+	console.log( result.data );
 	
 	// Now let's switch our selector context to another div
 	P('select', $("#results6"));
@@ -215,10 +217,10 @@ $(document).ready(function() {
 	 * accessing the .data property of the plugin as follows.
 	 * The returned data may need to be parsed based on type depending on what is returned.
 	 */
-	var strLenA = parseInt( P.strlen('some string').data );
-	var strLenB = parseInt( P.strlen('another string').data );
-	var totalStrLen = strLenA + strLenB;
-	// console.log(strLenA, strLenB, totalStrLen);
+	var strLenA = P.strlen('some string');
+	var strLenB = P.strlen('another string');
+	var totalStrLen = parseInt( strLenA ) + parseInt( strLenB );
+	//console.log(strLenA, strLenB, totalStrLen);
 	
 	
 	
@@ -232,8 +234,8 @@ $(document).ready(function() {
 	var testTime = P('bench', function() {
 		return (function() {
 			
-			var strLenA = parseInt( P.strlen('some string').data );
-			var strLenB = parseInt( P.strlen('another string').data );
+			var strLenA = parseInt( P.strlen('some string') );
+			var strLenB = parseInt( P.strlen('another string') );
 			var totalStrLen = strLenA + strLenB;
 			
 		});
@@ -256,9 +258,12 @@ $(document).ready(function() {
 
 
 	// Let's switch our selector element(s) context.
-	P('select', $("#results8"));
-	
-	
+	P('callback', function(data, self) {
+		$(self).append("<div style='border:2px dashed purple'>"+data+"</div>");
+	});
+	P('select', $("#results5"));
+	var result = P('chain', 8, 3).pow().pi().tan().data;
+	console.log(result);
 	
 	/* A buffered operations mode could keep a group of related PHP requests client side and then send 
 	 * them all at once to the server for execution so that they maintain the same context.
