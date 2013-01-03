@@ -6,7 +6,7 @@ Author: Wil Neeley (https://github.com/Xaxis)
 See the README file for documentation and usage information.
 **/
 (function( $ ) {
-  
+	
 	var 
 		
 		// Here we store core PHP function names
@@ -65,12 +65,6 @@ See the README file for documentation and usage information.
 			
 			// Stores our selected object(s)	
 			selected: null,
-			
-			// Stores our block mode index
-			blockIndex: 0,
-			
-			// Stores our block mode operations
-			block: {}
 		},
 		
 		config = {
@@ -350,6 +344,52 @@ See the README file for documentation and usage information.
 		},
 		
 		/**
+		 * Handles execution of blocks of PHP code in JSON format.
+		 * @phpObj {Object} A specially formatted JSON object.
+		 * @return {Object} jQuery object.
+		 */
+		block : function( phpObj ) {
+			var self = cache.selected,
+				args = arguments,
+				aLen = args.length;
+			
+			if ( jQuery.isPlainObject( args[0] ) ) {
+				
+				var phpObjects = args[0],
+					phpString = "";
+				
+				for ( obj in phpObjects ) {
+					phpString += obj.toString() + " = ";
+				}
+				
+				// Stringify our arguments list before passing it to the server
+				phpObj = JSON.stringify( phpObj );
+				
+				// The request object is built and sent to the server for handling
+				var request = $.ajax({
+					url: config.path,
+					type: "POST",
+					data: {'method': 'block', 'pobj': phpObj},
+					dataType: "text",
+					success: function (data) {
+						
+						// Convert out JSON string into an aobject
+						var parsedData = methods._type( data );
+						
+						// Stores our returned results globally.
+						cache.data = parsedData;
+						
+						// Call our global callback.
+						cache.callback( parsedData, self );
+					}
+				});
+				
+				return this;
+			}
+			
+		},
+		
+		/**
 		 * Computes the average latency of running a block of code. The more rounds you run
 		 * on a given test the higher its accuracy will be. By default 5 rounds are run.
 		 * !! Note - Based on John Resig's research any rounds that run tests shorter than 15ms
@@ -397,111 +437,6 @@ See the README file for documentation and usage information.
 			// Return our average time in milaseconds.
 			var average = roundsSum / roundTimes.length;
 			return average;
-		},
-		
-		/**
-		 * Handles block mode of delayed execution.
-		 * @callback {String} A callback that returns code to block.
-		 * @return {Object} jQuery object.
-		 */
-		block : function( phpObj ) {
-			var args = arguments,
-				aLen = args.length;
-			
-			if ( jQuery.isPlainObject( args[0] ) ) {
-				var phpObjects = args[0],
-					phpString = "";
-				
-				for ( obj in phpObjects ) {
-					phpString += obj.toString() + " = ";
-				}
-
-				// Use our global callback
-				var _callback = cache.callback;
-				
-				// Stringify our arguments list before passing it to the server
-				phpObj = JSON.stringify( phpObj );
-				
-				// The request object is built and sent to the server for handling
-				var request = $.ajax({
-					url: config.path,
-					type: "POST",
-					data: {'method': 'block', 'pobj': phpObj},
-					dataType: "text",
-					success: function(data) {
-						
-						console.log(data);
-						// Call our global callback.
-						//cache.callback( data, self );
-					}
-				});
-				
-				return this;
-			
-				console.log(phpObjects);
-			}
-			
-			
-			if ( jQuery.isFunction( callback ) ) {
-				
-				// - It seems we need some logic that can evaluate the code the user is trying
-				// 	 to send in a block. 
-				// - We could break that code into PHP function calls.
-				// - Then gather parameters that are being passed to those function calls.
-				// - Then store those function calls and parameters in a key/value object.
-				// - Then construct a special case XHR request to the backend containing our object.
-				// - Then construct a special case handler on the backend that executes all the requests.
-				// - Possibly return the last executed function request back to JavaScript.
-					
-				// We need to basically count all the function request calls. Doing this will allow
-				// us to keep an index of where we are in the block of execution before releasing
-				// the plugin back to "normal" operation mode.
-				var blockStr = callback().toString();
-					
-				var n = coreFunctions.array.split(" ").length,
-					methodObj = coreFunctions,
-					curMethod = null,
-					blockIndex = 0;
-
-				for ( methodClass in coreFunctions ) { 
-					var n = coreFunctions[ methodClass ].split(" ").length;
-					var curMethodClass = methodObj[methodClass].split(" ");
-				
-					while ( n-- ) {
-						
-						// Name of current method/function request we're searching for in our block string.
-						curMethod = curMethodClass[n];
-						
-						// Now we create our regex in order to count all occurences of function request strings.
-						var regex = new RegExp( "\\b" + "\\.[\\s*]" + curMethod + "\\b" + "\\("
-												+ "|"
-												+ "\\b" + "\\." + curMethod + "\\b" + "\\s*\\(", 
-												"g" );
-						
-						// Now we see if we find any matches in our block string.
-						var matched = ( blockStr.match( regex ) ) ? blockStr.match( regex ) : false;
-						
-						// If we have matches we updated our blockIndex count which will be used as a flag
-						// which indicates a parameter should be passed as the first argument of our method
-						// calls which tells us to buffer all function request so we can send them all at 
-						// once.
-						if ( matched ) {
-							
-							// Now we need to update our block index.
-							cache.index += matched.length;
-							
-							// Now we need to split up our function requests and parameter lists into an
-							// object.
-							cache.block = { };
-						}
-					
-					}
-				
-				}
-					
-			}
-			
-			//console.log(cache.index);
 		}
 
 	};
