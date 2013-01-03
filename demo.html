@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>jQuery PHP</title>
 <script type="text/javascript" src="lib/jquery-1.8.3.min.js"></script>
-<script type="text/javascript" src="lib/jquery.php.js"></script>
+<script type="text/javascript" src="jquery.php.js"></script>
 <style>
 body {
 	margin:40px;
@@ -24,7 +24,7 @@ body {
 <script>
 $(document).ready(function() {
 	
-	// Optionally define a shortcut reference
+	// Optionally define a shortcut reference                             
 	var P = $.fn.php;
 	
 
@@ -33,7 +33,7 @@ $(document).ready(function() {
 	P('init', 
 		{
 			// The path to our function request handler is absolutely required
-			'path': 'http://www.williamneeley.com/code/jqueryphp/lib/func_request.php',
+			'path': 'http://www.YourDomain.com/jqueryphp/request_handler.php',
 			
 			// Synchronous requests are required for method chaining functionality
 			'async': false,
@@ -137,10 +137,10 @@ $(document).ready(function() {
 		sqrt : [43]
 	});
 	
-	// Let's highlight a PHP string of code using our 'multi' functionality.
+	// Let's highlight a PHP string. Be sure and pass true as the second parameter to return the result.
 	P('multi',
 	{
-		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
+		highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>", true],
 	});
 	
 	// Let's run the 'pi' function and then the 'data' function.
@@ -156,10 +156,20 @@ $(document).ready(function() {
 	 * return the result. This method is disabled by default. This functionality MAY be deprecated in 
 	 * future releases.
 	 */
-	var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
-	P('exec', code, function(data, self) {
-		$(self).html(data);
-	});
+	var code = "$a = 2; $b = 2; $c = ($a + $b); return $c;";
+	P('exec', code);
+	
+	// We can also use 'exec' mode as follows
+	P(function exec(data, self) {
+		$(self).append("<div style='border:2px dashed pink'>" + data + "</div>");
+	}, "$a = 8; $b = 3; $c = ($a + $b); return $c;");
+
+	/* And of course we can return our data to a variable. Note that in 'exec' mode as well as 'block' mode
+	 * data is not returned automatically to a JavaScript variable. We must call the 'result' method in order
+	 * to gain access to our returned results in this manner.
+	 */
+	var execData = P('exec', code).result();
+	//console.log( execData );
 
 
 
@@ -197,8 +207,8 @@ $(document).ready(function() {
 	P('chain', 8, 3).pow().pi();
 	
 	// Let's see if our data can be returned to a JavaScript variable
-	var result = P('chain', 8, 3).pow().tan().abs().round();
-	console.log( result.data );
+	var result = P('chain', 8, 3).pow().tan().abs().data;
+	//console.log( result );
 	
 	// Now let's switch our selector context to another div
 	P('select', $("#results6"));
@@ -219,7 +229,7 @@ $(document).ready(function() {
 	 */
 	var strLenA = P.strlen('some string');
 	var strLenB = P.strlen('another string');
-	var totalStrLen = parseInt( strLenA ) + parseInt( strLenB );
+	var totalStrLen = strLenA + strLenB;
 	//console.log(strLenA, strLenB, totalStrLen);
 	
 	
@@ -234,8 +244,8 @@ $(document).ready(function() {
 	var testTime = P('bench', function() {
 		return (function() {
 			
-			var strLenA = parseInt( P.strlen('some string') );
-			var strLenB = parseInt( P.strlen('another string') );
+			var strLenA = P.strlen('some string');
+			var strLenB = P.strlen('another string');
 			var totalStrLen = strLenA + strLenB;
 			
 		});
@@ -246,11 +256,10 @@ $(document).ready(function() {
 	var testTime = P(function bench() {
 		return (function() {
 				
-			var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
+			var code = "$a = 14; $b = 34; $c = $a * $b; return $c;"
 			P('exec', code, function(data, self) {
 				$("#results7").html(data);
-			});
-			P('chain', 8, 3).pow().pi();
+			}).tan();
 			
 		});
 	}, 3);
@@ -263,55 +272,93 @@ $(document).ready(function() {
 	});
 	P('select', $("#results5"));
 	var result = P('chain', 8, 3).pow().pi().tan().data;
-	console.log(result);
+	//console.log(result);	
+
+	// Again we switch our selector context and redefine a new global callback.
+	P('select', $("#results8"));
+	P('callback', function(data, self) {
+		$(self).append("<div style='border:2px dotted orange'>"+data+"</div>");
+	});	
 	
-	/* A buffered operations mode could keep a group of related PHP requests client side and then send 
-	 * them all at once to the server for execution so that they maintain the same context.
+	/* - Each object block must contain only one definition that will be returned to a PHP variable with the same
+	 *   name as the JavaScript variable name the object is stored in.
+	 *
+	 * - The type of each object block is determined on the backend and is based off the structure of a given
+	 *   block, meaning:
+	 *		+ If you are defining an array (multi-dimensional) or otherwise, create a JavaScript array. This array
+	 *		  may contain JSON formatted objects. Remember, you would only be defining an array if one of the 
+	 *		  following code blocks will make user of the array as a parameter to a function.
+	 *		+ If you are calling a function create an object with a property name identical to the function
+	 *        you wish to call and assign to it an array containing its parameters. If there are no parameters
+	 *		  to pass, assign an empty array.
+	 *		+ You can list previously defined code blocks as an element within the array of parameters you are
+	 *		  passing to the function.
+	 *		+ If you are defining a string assign that string to a variable.
+	 *		+ If you are defining a number assign that number to a variable.
+	 *
+	 * - Before passing your block of code to the 'block' method you first must create an object wrapper that
+	 *   contains all of your sub-blocks, with a reference name identical to the variable name you used to
+	 *   define them. Place the sub-blocks in the order you wish PHP to execute your arguments.
 	 */
-	/*
-	P('block', function() {
-		return (function() {
-				 
-	 		var someStr = "val1,val2,val3,val4,val5,val6";
-			
-			var explodedStr = P. explode( ",", explode );
-			
-			var explodedStr = P.tan( 66 );
-			
-			var explodedStr = P.abs ( -45 );
-			
-			var explodedStr = P.sin     ( 44 );
+	var 
 		
-		});
-	});
-	*/
-	
-	// OR
-	
-	// !! REFACTORING REQUIRED !!
-	// - The simplest option for parsing delayed block operation may be to pass a JSON block of function
-	// 	 requests and variables in a JSON format.
-	// - It may be less intuitive at first glance but from a programmatic stand point far easier to implement.
-	// - Either way the parsing logic will be required.
-	// - With that in mind it may simply be easier to expand the 'exec' mode with a backend "security filter"
-	//   that is capable of combining the whitelist/blacklist to restrict illegal function calls, detecting and
-	//	 preventing race conditions such as infinite loops, and other dangerous code sent from the frontend.
-	/*
-	P('block', 	{
-		$opts : {
-			http: {
-				method: "GET",
-				header: "Accept-language: en\r\n" +
-						"Cookie: foo=bar\r\n"
+		// We can define any variable type we like but they go unused unless we reference them as parameters.
+		str = "Let's use PHP's file_get_contents()!",
+		
+		// Here we are defining an array which is used to create a stream in the stream_context_create function.
+		opts = 
+		[
+			{
+				http: {
+					method: "GET",
+					header: "Accept-language: en\r\n" +
+							"Cookie: foo=bar\r\n"
+				}
 			}
+		],
+		
+		// All functions are identified by property names in sub-blocks of code. We pass the string 'opts' to
+		// stream_context_create. Notice our string is the same name as our variable definition above.
+		context = 
+		{
+			stream_context_create: ['opts']
+		};
+		
+		// We then indicate we would like to call file_get_contents with the passed arguments in the array
+		// referenced by our property name. Notice again the string 'context' being passed. It will once 
+		// parsed reference the returned result from the previously defined stream_context_create function.
+		contents = 
+		{
+			file_get_contents: ['http://www.williamneeley.com/', false, 'context']
 		},
-		$context : {
-			stream_context_create: [this.$opts]
-		},
-		$file : {
-			file_get_contents: ['http://www.williamneeley.com/', false, this.$context]
-		}
-	});
+
+		// Now we define our code block which will be passed as JSON to our 'block' method. It is imperative that
+		// you make the property names of this object identical to the reference strings you passed as parameters
+		// to the functions you are calling.
+		codeBlock = {
+			str: str,
+			opts: opts,
+			context: context,
+			contents: contents
+		};
+	
+	// Our code block is passed to the block function and the data is returned to the callback assigned to it.
+	//P('block', codeBlock);
+	
+	// In order to return our data to a JavaScript variable and prevent it from using our globally defined callback
+	// we must override the global callback again with an empty callback.
+	//P('callback', function() {});	
+	
+	// Optionally we can store any returned results from our block function directly to a JavaScript variable.
+	//var pageContents = P('block', codeBlock).result();
+	//console.log(pageContents);
+	
+	// Following the design pattern of the rest of our mode options we can of course use our block mode functionality
+	// while defining a callback.
+	/*
+	P(function block(data, self) {
+		$(self).append("<div style='border:5px dotted green'>"+data+"</div>");
+	}, codeBlock);
 	*/
 			
 });
