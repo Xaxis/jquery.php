@@ -145,57 +145,8 @@ containing PHP pseudo-code to be executed by PHP. Unlike other modes, code and f
 executed and returned one at a time. Instead the entire "block" of JSON pseudo-code is executed on the
 server and then returned.
 
-```javascript
-var 
-    
-    // We can define any variable type we like but they go unused unless we reference them as parameters.
-    str = "Let's use PHP's file_get_contents()!",
-    
-    // Here we are defining an array which is used to create a stream in the stream_context_create function.
-    opts = 
-    [
-        {
-            http: {
-                method: "GET",
-                header: "Accept-language: en\r\n" +
-                        "Cookie: foo=bar\r\n"
-            }
-        }
-    ],
-    
-    // All functions are identified by property names in sub-blocks of code. We pass the string 'opts' to
-    // stream_context_create. Notice our string is the same name as our variable definition above.
-    context = 
-    {
-        stream_context_create: ['opts']
-    };
-    
-    // We then indicate we would like to call file_get_contents with the passed arguments in the array
-    // referenced by our property name. Notice again the string 'context' being passed. It will once 
-    // parsed reference the returned result from the previously defined stream_context_create function.
-    contents = 
-    {
-        file_get_contents: ['http://www.williamneeley.com/', false, 'context']
-    },
-    
-    // We finally take the results from our previous function and pass it to htmlentities
-    html = 
-    {
-        htmlentities: ['contents']
-    },
-
-// Now we define our code block which will be passed as JSON to our 'block' method. It is imperative that
-// you make the property names of this object identical to the reference strings you passed as parameters
-// to the functions you are calling.
-codeBlock = {
-    str: str,
-    opts: opts,
-    context: context,
-    contents: contents,
-    html: html
-};
-    
-// And of course if we so desire we can compact all of the above into a single object. 
+```javascript    
+// We structure a JSON block of data and function requests to be passed to the server 
 var codeBlock = {
     str: "Let's use PHP's file_get_contents()!",
     opts: 
