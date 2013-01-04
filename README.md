@@ -44,7 +44,7 @@ provide the names of all user defined functions we want to use in a space delimi
 P('init', 
 {
     // The path to our function request handler is absolutely required
-    'path': 'http://www.williamneeley.com/code/jqueryphp/request_handler.php',
+    'path': 'http://www.YourDomain.com/jqueryphp/request_handler.php',
     
     // Synchronous requests are required for method chaining functionality
     'async': false,
