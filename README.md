@@ -13,14 +13,14 @@
 * jQuery library (http://www.jquery.com)
 
 ## FEATURES:
-* Access to PHP core functions as JavaScript methods
-* Dynamic JavaScript to PHP code translation
+* Access to PHP core & user defined functions as JavaScript methods
+* Dynamic JSON pseudo code to PHP translation
 * Execution of PHP strings within JavaScript
 * Chaining of PHP functions as JavaScript methods
 * Performance testing functionality
 * Security procedures to block unintended PHP usage from the client
 * Client side caching support for multiple function requests
-* Whitelist/Blacklist operations mode on PHP function calls
+* Whitelist/Blacklist operations modes for PHP function calls
 * Wide range of design patterns for calling and using PHP functions
 * Great flexibility while working with returned results and the DOM
 * Automatic type conversion of returned results into JavaScript types
@@ -43,14 +43,16 @@ provide the names of all user defined functions we want to use in a space delimi
 ```javascript
 P('init', 
 {
-		// The path to our function request handler is absolutely required
-		'path': 'http://www.YourDomain.com/lib/func_request.php',
-
-		// List any user defined functions in the manner prescribed here
-		'userFunctions': {
-			private: '_foo _bar _someFunc1 _someFunc2',
-			public: 'foo bar someFunc1 someFunc2'
-		}
+    // The path to our function request handler is absolutely required
+    'path': 'http://www.williamneeley.com/code/jqueryphp/request_handler.php',
+    
+    // Synchronous requests are required for method chaining functionality
+    'async': false,
+    
+    // List any user defined functions in the manner prescribed here
+    'userFunctions': {
+        languageFunctions: 'echo print print_r'
+    }
 });
 ```
 
@@ -59,174 +61,271 @@ Here we can define a global callback function so we don't have to pass one to ou
 if we're using the context of jquery selected elements.
 
 ```javascript
-// One way to set our global callback function.
-P(function callback(data, self) {
-	$(self).append("<div>" + data + "</div>");
-});
-
-// This is another way to set our global callback function.
-P('callback', function(data, self) {
-	$(self).append("<span>" + data + "</span>");
+// Setting the global callback is as simple as passing a callback function to our plugin
+P(function (data, self) {
+    $(self).append("<div>" + data + "</div>");
 });
 ```
 
 ### Defining a global selector context
 Here we specify the jquery selected elements we would like our bound context to be. This will override
-any previously selected elements. You can optionally define the element(s) context while calling PHP
-functions as demonstrated in examples below.
+any previously selected contexts.
 
 ```javascript
-P('select', $("#results1"));
+// Setting our selector context can also be done independently by passing our selector object
+P($("#results1"));
 ```
 
-### Usage scenarios
+### Defining the global selector and callback simultaneously
+Sometimes it will be easier to specify both the global selector context and callback at the same time.
+
+```javascript
+// We can set our global callback and selector context at the same time
+P($("#results1"), function(data, self) {
+    $(self).append("<div id='whatever'>" + data + "</div>");
+});
+
+```
+
+### Usage scenario (Simple)
 The following are some simple usage scenarios. It should be noted that the examples below demonstrate
-multiple ways to do the same thing. In the usage scenarios below we are calling PHP's strlen function.
+multiple ways to do nearly the same thing (call PHP's highlight_string function). 
 
 ```javascript	
-// The simplest way of calling your PHP function.
-P.strlen('I am a string.');
+// This is perhaps the simplest way of calling your PHP function
+P.highlight_string('I am a string.', true); 
+ 
+// Passing the 'call' keyword is allowed but not required
+P('call', 'highlight_string', 'We just used a method using the call command string!', true);	
 
-// And of course we can return our string length to a variable.
-var strLen = P.strlen('I am a string.');
-
-// Passing the 'call' keyword is allowed but not required or necessary.
-P('call', 'strlen', 'A test string!');	
-	
-// Naming your function name 'call' is also possible (but not required or necessary).		
+// Assinging your callback with the function name call is also possible (again not required)		
 P(function call(data, self) {
-	$(self).append("<br><i>" + data + "</i>");
-}, 'strlen', 'A test string!');	
-	
-// Passing the function you wish to use as a string as the first parameter.
-P('strlen', 'A longer test string!');
+    $(self).append("<div><i>" + data + "</i></div>");
+}, 'highlight_string', 'A test string that is 36 characters!', true);	
 
-// Assinging the function you wish to call as the name of the callback.
-P(function strlen(data, self) {
-	$(self).append("<br><u>" + data + "</u>");
-}, 'A shorter string!');
+// Passing the function you wish to use as a string as the first parameter
+P('highlight_string', 'A longer test string!', true);
 
-// Calling your function while setting a new global callback.
-P('strlen', function(data, self) {
-	$(self).append("<br><u style='color: red'>" + data + "</u>");
-}, 'This will be the longest string passed to strlen yet!');
+// Assinging the PHP function you wish to call as the name of the callback
+P(function highlight_string(data, self) {
+    $(self).append("<div><u>" + data + "</u></div>");
+}, 'A shorter string!', true);
 
-// Calling your function while choosing a new selector context and setting a new callback.
-$("#results1").php('strlen', function(data, self) {
-	$(self).append("<br><u style='color: green'>" + data + "</u>");
-}, 'This will be the longest string passed to strlen yet (plus one)!');
-	
-// Calling your function while choosing a new selector context without setting a new callback.
-$("#results2").php('strlen', 'Yet another string!');
+// Calling your PHP function by passing a string
+P('highlight_string', function(data, self) {
+    $(self).append("<div><u style='color: red'>" + data + "</div>");
+}, 'This will be the longest string passed to strlen yet!', true);
+
+// Calling your function while choosing a new selector context and setting a new callback
+$("#results1").php('highlight_string', function(data, self) {
+    $(self).append("<div><u style='color: green;'>" + data + "</u></div>");
+}, 'This will be the longest string passed to strlen yet (plus one ++)', true);
+
+// Calling your function while choosing a new selector context without setting a callback
+$("#results1").php('highlight_string', 'Yet another string!', true);
 ```
 
-### Some more simple usage demonstrations
+### Usage scenario (Returning Values)
+Many times we have no need to work with the DOM and our returned results. When making single function calls
+it's as easy as assigning our calls to a variable.
 
 ```javascript
-// Now let's switch our selector context to another div
-P('select', $("#results2"));
-	
-// Let's set another callback function (if you don't further requests will just use the last one).
-P('callback', function(data, self) {
-	$(self).append("<div style='font-size: 2.0em;'>" + data + "</div>");
-});
-	
-// And we call PHP's crypt function on the passed string.
-P.crypt("My encrypted passphrase.");
-	
-// Now let's switch our selector context to another div
-P('select', $("#results3"));
-	
-// Let's set another callback function (if you don't further requests will just use the last one).
-P('callback', function(data, self) {
-	$(self).append("<div style='font-size: 2.0em;'>" + data + "</div>");
-});
-	
-// And we call PHP's crypt function on the passed string.
-P.crypt("My encrypted passphrase.");
-	
-// Now let's switch our selector context to another div
-P('select', $("#results3"));
-```
+// We suspend our callback so the global callback is not used
+P.useCallback = false;
 
-### Using multi mode
-The below is an example of calling multiple consecutive functions as an object by passing the function
-name as the key and then an array of values pertaining to a given function's parameters.
-
-```javascript
-// Let's call a series of math functions
-P(function multi(data, self) {
-	$(self).append("<div>" + data + "</div>");
-},
-{
-	abs : [-884],
-	cosh : [23],
-	sqrt : [43]
-});
-	
-// Let's highlight a PHP string of code using our 'multi' functionality.
-P('multi',
-{
-	highlight_string : ["<?php $a = 2; $b = 2; $c = $a + $b; echo $c; ?>"],
-});
-	
-// Let's run the 'pi' function and then the 'data' function.
-$("#results4").php('multi',
-{
-	pi : [700],
-	date : ["DATE_RFC822"]
-});
-```
-
-### Using code exec mode
-Exec mode directly passes PHP code to the backend and return the result. This method is disabled by
-default on the backend.
-
-```javascript
-// Passsing a simple string and return results.
-var code = "$a = 2; $b = 2; $c = $a + $b; echo $c;"
-P('exec', code, function(data, self) {
-	$(self).html(data);
-});
-```
-
-### Using function chaining
-The below is an example of calling PHP functions using a function chaining pattern. It is imperative 
-that we pass our callback as the first argument. In addition, naming the callback function 'chain'
-is required. When passing parameters to a chain just think of the first function being called to
-know which parameters to pass. It is the returned results of the first function that all other
-functions in the chain act on.
-
-```javascript
-// Call a few math functions to work on the value -138
-P(function chain(data, self) {
-	$(self).append("<div style='border:2px dashed blue'>" + data + "</div>");
-}, -138)
-	.abs()
-	.tan();
-	
-// Call a few functions to operate on the parameters 2, 8
-P('chain', function(data, self) {
-	$(self).append("<div style='border:2px dashed yellow'>" + data + "</div>");
-}, 2, 8)
-	.pow()
-	.pi();
-	
-// And of course we can do the same thing without passing a callback
-P('chain', 8, 3).pow().pi();
-```
-
-### Using PHP returned results directly in JavaScript
-In many cases we will want to return data from a PHP function request to a JavaScript variable instead
-of a DOM element so we can further act on that data with our JavaScript code. We can do so easily by 
-assinging our method call to a JavaScript variable and accessing the .data property of the function call.
-
-```javascript
-// Here we calculate the total string length of a few strings
 var strLenA = P.strlen('some string');
 var strLenB = P.strlen('another string');
 var totalStrLen = strLenA + strLenB;
-console.log(strLenA, strLenB, totalStrLen);
+console.log( totalStrLen );
+```
+
+### Usage scenario (Block Mode)
+Perhaps one of the most powerful modes provided is block mode. In block mode you can pass a JSON object
+containing PHP pseudo-code to be executed by PHP. Unlike other modes, code and function requests are not
+executed and returned one at a time. Instead the entire "block" of JSON pseudo-code is executed on the
+server and then returned.
+
+```javascript
+var 
+    
+    // We can define any variable type we like but they go unused unless we reference them as parameters.
+    str = "Let's use PHP's file_get_contents()!",
+    
+    // Here we are defining an array which is used to create a stream in the stream_context_create function.
+    opts = 
+    [
+        {
+            http: {
+                method: "GET",
+                header: "Accept-language: en\r\n" +
+                        "Cookie: foo=bar\r\n"
+            }
+        }
+    ],
+    
+    // All functions are identified by property names in sub-blocks of code. We pass the string 'opts' to
+    // stream_context_create. Notice our string is the same name as our variable definition above.
+    context = 
+    {
+        stream_context_create: ['opts']
+    };
+    
+    // We then indicate we would like to call file_get_contents with the passed arguments in the array
+    // referenced by our property name. Notice again the string 'context' being passed. It will once 
+    // parsed reference the returned result from the previously defined stream_context_create function.
+    contents = 
+    {
+        file_get_contents: ['http://www.williamneeley.com/', false, 'context']
+    },
+    
+    // We finally take the results from our previous function and pass it to htmlentities
+    html = 
+    {
+        htmlentities: ['contents']
+    },
+
+// Now we define our code block which will be passed as JSON to our 'block' method. It is imperative that
+// you make the property names of this object identical to the reference strings you passed as parameters
+// to the functions you are calling.
+codeBlock = {
+    str: str,
+    opts: opts,
+    context: context,
+    contents: contents,
+    html: html
+};
+    
+// And of course if we so desire we can compact all of the above into a single object. 
+var codeBlock = {
+    str: "Let's use PHP's file_get_contents()!",
+    opts: 
+    [
+        {
+            http: {
+                method: "GET",
+                header: "Accept-language: en\r\n" +
+                        "Cookie: foo=bar\r\n"
+            }
+        }
+    ],
+    context: 
+    {
+        stream_context_create: ['opts']
+    },
+    contents: 
+    {
+        file_get_contents: ['http://www.williamneeley.com/', false, 'context']
+    },
+    html: 
+    {
+        htmlentities: ['contents']
+    }
+}
+
+// Following the design pattern of the rest of our mode options we can of course use our block mode functionality
+// while defining a callback.
+P(function block(data, self) {
+    $(self).append("<div style='border:5px dotted green; white-space:pre-wrap;'>"+data+"</div>");
+}, codeBlock);
+
+// Our code block is passed to the block function and the data is returned to the callback assigned to it.
+P('block', codeBlock);	
+
+// We suspend our callback so the global callback is not used
+P.useCallback = false;
+
+// Optionally we can store any returned results from our block function directly to a JavaScript variable.
+var pageContents = P('block', codeBlock).result();
+console.log(pageContents);
+```
+
+### Usage scenario (Multi Mode)
+Multi mode allows you to call consecutive PHP functions as an object by passing the function name as
+the property. Each property references a an array of parameters to be passed to that function. When we
+return the results of a multi call to a variable an array is returned containing all the returned values.
+
+```javascript
+// Using multi mode and setting a new global callback
+P(function multi(data, self) {
+    $(self).append("<div>" + data + "</div>");
+},
+{
+    abs : [-884],
+    cosh : [23],
+    sqrt : [43]
+});
+
+// If we don't want our following function calls to use our global callback we can suspend the callback
+P.useCallback = false;
+
+// Now we can return an array of values from our multi mode call
+var dataSet = P('multi',
+{
+    abs : [-884],
+    cosh : [23],
+    sqrt : [43]
+}).data;
+console.log(dataSet);
+
+// The global callback is unsuspended on the next callback passed to our plugin but we can also do so manually
+P.useCallback = true;
+
+// Set a new selector context while using multi mode
+$("#results4").php('multi',
+{
+    pi : [700]
+});
+```
+
+### Usage scenario (Exec Mode)
+Exec mode allows you to pass arbitrary strings of PHP code to be executed. This mode is disabled by default
+on the backend. It is advisable to only use this mode in development stages.
+
+```javascript
+// The one required component of an exec mode string is that a value be returned
+var code = "$a = 2; $b = 2; $c = ($a + $b); return $c;";
+P('exec', code);
+
+// We can of course use exec mode while setting a new global callback
+P(function exec(data, self) {
+    $(self).append("<div style='border:2px dashed pink'>" + data + "</div>");
+}, "$a = 8; $b = 3; $c = ($a + $b); return $c;");
+
+// In order to return data to a variable we must call the result() method 
+var execData = P('exec', code).result();
+console.log( execData );
+```
+
+### Usage scenario (Chain Mode)
+The below is an example of calling PHP functions using the chain mode pattern. We pass our parameters to be
+acted on to our plugin method directly. No parameters should be sent to individual functions in the chain.
+All functions in the chain must be able to work on the returned results of the function before itself in
+the chain.
+
+```javascript
+// The simplest way to use chain mode
+P('chain', 8, 3).pow().pi();
+
+// One way to interface with our chain mode
+P(function chain(data, self) {
+    $(self).append("<div style='border:2px dashed blue'>" + data + "</div>");
+}, -138)
+    .abs()
+    .tan();
+
+// Interfacing with our chain mode using the 'chain' keyword
+P('chain', function(data, self) {
+    $(self).append("<div style='border:2px dashed yellow'>" + data + "</div>");
+}, 2, 8)
+    .pow()
+    .pi();
+
+// We suspend our callback so the global callback is not used
+P.useCallback = false;
+
+// Returning our results from a chain call directly to a variable (note the .data property)
+var result = P('chain', 8, 3).pow().tan().abs().data;
+console.log( result );
 ```
 
 ### Performance bench testing
