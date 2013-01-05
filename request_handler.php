@@ -20,15 +20,14 @@ $blacklist = array(
 	'require',
 	'require_once',
 	'shell_exec',
-	'system',
-	'file_get_contents'
+	'system'
 );
 
 /* The whitelist array is used when the SEC_MODE configuration variable is set to 'whitelist'. When configured
  * to use the whitelist only functions listed in the array will be enabled.
  */
 $whitelist = array(
-	// 'strlen',		// (e.g. Allowing the strlen function)
+	// 'strlen',			// (e.g. Allowing the strlen function)
 	// 'highlight_string'	// (e.g. Etc...)
 );
 
@@ -98,9 +97,7 @@ if ( $method_request ) {
 				 $code_string = $_POST['code'] ? $_POST['code'] : false;
 				 
 				 // Prefix our code with return to prevent NULL from being returned.
-				 $result = eval( "return " . $code_string );
-				 
-				 echo parse_type( $result );
+				 echo parse_type( eval( $code_string ) );
 			} 
 			break;
 		
@@ -111,30 +108,28 @@ if ( $method_request ) {
 			$php_obj = $_POST['pobj'] ? json_decode( $_POST['pobj'] ) : false;
 				 
 			// Pass our JSON decoded PHP objects array to our execution handler
-			print parse_type( execute_array( $php_obj, $config ) );
-			//execute_array( $php_obj, $config );
-				 
+			print parse_type( parse_php_object( $php_obj, $config ) );				 
 			break;
 	}
 
 }
 
 /**
- * Iterates over an array containing PHP and handles calls to enabled functions and executes them.
- * @param {phpObj} array A JSON decoded multi-dimensional array.
- * @return {*} Will return the results of the last function call passed in through our phpObj.
+ * Converts PHP objects to arrays by typecasting.
+ * @param {object} Object A self referencing PHP object.
  */
-function execute_array( $arr, $config ) {
-	
-	/**
-	 * Converts PHP objects to arrays by typecasting.
-	 * @param {object} Object A self referencing PHP object.
-	 */
-	function object_to_array( &$object ) {
-		if ( is_object( $object ) ) {
-			(Array)$object;
-		}
+function object_to_array( &$object ) {
+	if ( is_object( $object ) ) {
+		(Array)$object;
 	}
+}
+	
+/**
+ * Iterates over an array containing PHP and handles calls to enabled functions and executes them.
+ * @param {phpObj} array A JSON decoded array of representational PHP.
+ * @return {*} Will return the results of the last function call passed in through phpObj.
+ */
+function parse_php_object( $arr, $config ) {
 	
 	// We define a pointer array that contains reference names to parameter placeholders
 	// that will be replaced by real data.
@@ -170,8 +165,8 @@ function execute_array( $arr, $config ) {
 				// We compare against the keys in our pointers index which was created above
 				if ( array_key_exists( $arg, $pointers ) ) {
 					
-					// This is now a reference to the ${$k} to the originally defined definition, the returned
-					// result of the first sucessful function call
+					// This is now a reference to ${$k}, the originally defined definition, the returned
+					// result of the last sucessful function call
 					$p = ${$arg};
 					
 					// We push our arguments onto the args_array which will be passed to our function call
@@ -185,7 +180,7 @@ function execute_array( $arr, $config ) {
 			}
 			
 			
-			// Based on the security mode we use either our blacklist or whitelist.
+			// Based on the security mode selected, use either our blacklist or whitelist.
 			switch ( $config['SEC_MODE'] ) {
 				case 'blacklist' :
 					if ( function_exists( $func_name ) 
@@ -218,9 +213,8 @@ function execute_array( $arr, $config ) {
 			}
 		}
 		
-		// When we're not an object we're something else like an array, string etc. If we're array we need
-		// to recursively iterate over ourselves to convert any potential objects into an array and then we
-		// store ourselves back onto our variable definition.
+		// When we're not an object we're something else like an array, string, int, etc. If we're an array we need
+		// to recursively iterate over ourselves to convert any objects into arrays.
 		else {	
 			if ( is_array( ${$k} ) ) {
 				array_walk_recursive( ${$k}, 'object_to_array' );
@@ -229,11 +223,12 @@ function execute_array( $arr, $config ) {
 		
 	}
 	
+	// Return the returned result from our final function call
 	return ${$k};
 }
 
 /**
- * Detects the type of a returned result and parses data accordingly.
+ * Detects the type of a returned result and encodes a type identifier along with the data into a JSON object.
  * @param {*} data Result data from a PHP function call.
  * @return {Object} JSON encoded result data with type field.
  */
