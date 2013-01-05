@@ -1,5 +1,5 @@
 /**
- * jqueryphp jQuery Plugin v2.0
+ * jquery.php v2.0
  * https://github.com/Xaxis/jqueryphp
  * Author: Wil Neeley (https://github.com/Xaxis)
  *
@@ -9,6 +9,9 @@
 (function( $ ) {
 	
 	var 
+		
+		// Reference to our plugin
+		plugin = $.fn.php,
 		
 		// Here we store core PHP function names
 		coreFunctions = {
@@ -55,25 +58,22 @@
 			plugin: 'result plugin'
 		},
 		
-		flags = {
-			
-			// Indicates whether or not to use our global callback
-			useCallback: true
-		},
-		
 		cache = {
 			
-			// A global reference shortcut to our plugin
+			// Reference to jquery.php
 			plugin: $.fn.php,
 			
-			// Stores values to be computed in a chain call
+			// Returned data from the last request
 			data: false,	
 			
-			// Stores the callback used in a chain call	
+			// The global callback	
 			callback: null,
 			
-			// Stores our selected object(s)	
+			// The global context	
 			selected: null,
+			
+			// Keep track of which operating mode
+			mode: 'default'
 		},
 		
 		config = {
@@ -97,13 +97,10 @@
 		 */
 		_init : function( options ) {
 			
-			// Extend our plugin object with its property flags
-			$.extend( cache.plugin, flags );
-			
 			// At runtime we first extend our config object with required run time values.
 			$.extend( config, options );
 			
-			// Extend any plugin methods with our coreFunctions object
+			// Extend plugin methods with our coreFunctions object
 			var updatedFunctions = $.extend( coreFunctions, pluginFunctions );
 			
 			// We copy any potentially user defined functions into our userFunctions global.
@@ -119,7 +116,7 @@
 		 * Impliment object method creation of core and user defined functions.
 		 * @return {Object} jQuery object.
 		 */
-		_chain: function() {
+		_chain : function() {
 			
 			// Extend our coreFunctions object with any user defined functions if provided
 			if ( ! jQuery.isEmptyObject( userFunctions ) ) {
@@ -129,10 +126,8 @@
 			var n = 0,
 				methodObj = coreFunctions,
 				curMethod = null;
-			
-			/* For every PHP function class in our core PHP functions object we split the string of 
-			 * function names into an array and attach them as an object method of our plugin.
-			 */
+
+			// Attach methods to the jquery.php object
 			for ( methodClass in methodObj ) { 
 				n = coreFunctions[ methodClass ].split(" ").length;
 				var curMethodClass = methodObj[methodClass].split(" ");
@@ -151,10 +146,7 @@
 								aLen = args.length,
 								fName = curMethod;
 							
-							/* No additional parameters should be passed to a method in a chain. If
-							 * a parameter is detected in a method call we assume the user is calling
-							 * a given function individually.
-							 */
+							// If parameters are passed chain mode isn't used
 							if ( aLen > 0 ) {
 								
 								// We iterate over all arguments passed and remove any callbacks.
@@ -168,6 +160,7 @@
 								// We add our function request to the begening of the array
 								passArgs.unshift( curMethod );
 								
+								// Execute the call method
 								methods.call.apply( cache.selected, Array.prototype.slice.call( passArgs ));
 								
 								// Bind our return result to the data property of the plugin.
@@ -199,14 +192,16 @@
 										this.data = cache.data[0];
 										return this;
 										break;
+										
 								}
 								
-								// We place the method name at the begening of our data array for our call method.
-								cache.data.unshift(fName);
+								// Place function request name at the start of our array
+								cache.data.unshift( fName );
 								
-								methods['call'].apply( cache.selected, Array.prototype.slice.call( cache.data ));
+								// Execute the call method
+								methods.call.apply( cache.selected, Array.prototype.slice.call( cache.data ));
 								
-								// Bind our return result to the data property of the plugin.
+								// Bind returned results to the data property
 								this.data = cache.data[0];
 								return this;
 							}
@@ -226,7 +221,7 @@
 		 * @param {String} phpObj A JSON encoded string from the server.
 		 * @return {Object} jQuery object.
 		 */
-		_type: function( phpObj ) {
+		_type : function( phpObj ) {
 			var obj = JSON.parse( phpObj ),
 				type = obj['type'],
 				data = obj['data'];
@@ -258,42 +253,52 @@
 		},
 		 
 		/**
-		 * Handles backend PHP function requests.
+		 * Handles sending PHP function requests to the server.
 		 * @func {String} Name of function being requested.
 		 * @return {Object} jQuery object.
 		 */
-		call : function( func ) {
-			
-			/* Instead of requiring a callback on each execution of this
-			 * method we use a callback was set as a global.
-			 */
-			var _callback = cache.callback;
-			 
-			/* We subtract 1 from the arglen variable so when building our args string to
-			 * pass to the server we are not sending the func string to be interpreted as 
-			 * a argument to be passed to a PHP function. 
-			 */	
-			var self = cache.selected,
-				arglen = arguments.length - 1,
-				args = arguments;
-			
-			/* Here we build a JSON object containing the arguments (if any) to be passed to 
-			 * the PHP function. We offset our index by 2 so we don't pass the function string 
-			 * or the callback object to the server.
-			 */
-			var jsonObj = [];
-			for ( var i = 0; i < arglen; i++ ) {
-				var argId = i + 1;
-				jsonObj.push( args[argId] );
+		call : function() {
+
+			// Holds our data object used in our XHR object
+			var passData = null;
+	
+			switch ( cache.mode ) {
+					
+				case 'exec' :
+					
+					// Reference our code to be executed
+					var code = arguments[0];
+					
+					passData = { 'method': 'exec', 'code': code };
+					break;
+					
+				case 'block' :
+				
+					// Stringify our PHP object block
+					var phpObj = JSON.stringify( arguments[0] );
+				
+					passData = { 'method': 'block', 'pobj': phpObj };
+					break;
+					
+				default :
+				
+					// Copy arguments array like object into an array
+					var args = [];
+					for ( var i = 0; i < arguments.length; i++ ) {
+						args.push( arguments[i] );
+					}
+					
+					// Get the name of the function being requested
+					var func = args.shift();
+					
+					// Stringify our parameters before sending
+					var funcArgs = JSON.stringify( args );
+					
+					passData = { 'method': 'call', 'func': func, 'args': funcArgs };
+					break;
 			}
 			
-			// Stringify our arguments list before passing it to the server
-			var passArgs = JSON.stringify(jsonObj);
-			
-			/* Based on the config value we configure async or sync XHR request. 
-			 * !! Note - The method chaining pattern will not work in asyncronous mode.
-			 * !! Note - I may completely deprecate this configuration option.
-			 */
+			// Configure async mode
 			if ( config.async === false ) {
 				jQuery.ajaxSetup({async: false});
 			} else {
@@ -304,170 +309,71 @@
 			var request = $.ajax({
 				url: config.path,
 				type: "POST",
-				data: {'method': 'call', 'func': func, 'args': passArgs},
+				data: passData,
 				dataType: "text",
-				success: function(data) {
+				success: function( data ) {
 					
-					// Convert out JSON string into an aobject
+					// Convert our returned string to the correct type
 					var parsedData = methods._type( data );
 					
-					// Stores our returned results globally.
+					// Stores our returned results globally
 					cache.data = parsedData;
 					
 					if ( $.fn.php.useCallback === true ) {
 						
-						// Call our global callback.
-						cache.callback( parsedData, self );
-					} 
-				}
-			});
-			
-			return this;
-		},
-		
-		/**
-		 * Handles running PHP code strings.
-		 * @code {String} 	PHP code to be executed.
-		 * @callback {Function} A function for handling returned results.
-		 * @return {Object} jQuery object.
-		 */
-		exec : function( code, callback ) {
-			var self = cache.selected;
-			
-			/* Based on the config value we configure async or sync XHR request. 
-			 * !! Note - The method chaining pattern will not work in asyncronous mode.
-			 * !! Note - I may completely deprecate this configuration option.
-			 */
-			if ( config.async === false ) {
-				jQuery.ajaxSetup({async: false});
-			} else {
-				jQuery.ajaxSetup({async: true});
-			}
-			
-			/*
-			 * Finally the request object is built and sent to the server
-			 * for handling.
-			 */
-			var request = $.ajax({
-				url: config.path,
-				type: "POST",
-				data: {'method': 'exec', 'code': code},
-				dataType: "text",
-				success: function( data, textStatus, xhr ) {
-					
-					// Convert out JSON string into an aobject
-					var parsedData = methods._type( data );
-					
-					// Stores our returned results globally.
-					cache.data = parsedData;
-					
-					if ( $.fn.php.useCallback === true ) {
-						
-						// Call our global callback.
-						cache.callback( parsedData, self );
-					} 
-				}
-			});
-			
-			return this;
-		},
-		
-		/**
-		 * Handles execution of blocks of PHP code in JSON format.
-		 * @phpObj {Object} A specially formatted JSON object.
-		 * @return {Object} jQuery object.
-		 */
-		block : function( phpObj ) {
-			var self = cache.selected,
-				args = arguments,
-				aLen = args.length;
-			
-			if ( jQuery.isPlainObject( args[0] ) ) {
-				
-				var phpObjects = args[0],
-					phpString = "";
-				
-				for ( obj in phpObjects ) {
-					phpString += obj.toString() + " = ";
-				}
-				
-				// Stringify our arguments list before passing it to the server
-				phpObj = JSON.stringify( phpObj );
-				
-				// The request object is built and sent to the server for handling
-				var request = $.ajax({
-					url: config.path,
-					type: "POST",
-					data: {'method': 'block', 'pobj': phpObj},
-					dataType: "text",
-					success: function (data) {
-						
-						// Convert out JSON string into an aobject
-						var parsedData = methods._type( data );
-						
-						// Stores our returned results globally.
-						cache.data = parsedData;
-						
-						if ( $.fn.php.useCallback === true ) {
-							
-							// Call our global callback.
-							cache.callback( parsedData, self );
-						} 
+						// Call our global callback
+						cache.callback( parsedData, cache.selected );
 					}
-				});
-				
-				return this;
-			}
+					
+				}
+			});
 			
+			return this;
 		},
 		
 		/**
 		 * Computes the average latency of running a block of code. The more rounds you run
 		 * on a given test the higher its accuracy will be. By default 5 rounds are run.
-		 * 
-		 * !! Note - Based on John Resig's research any rounds that run tests shorter than 15ms
-		 * the system will round off to 0. This means there is very little accuracy in tests
-		 * under this time span.
 		 * @param {Function} callback A function containg code to be tested. 
 		 * @param {Int} rounds The number of rounds to test the code.
 		 * @return {String} The computed average time in milaseconds.
 		 */
 		bench : function( callback, rounds ) {
 			
-			// Establish a default value of rounds.
+			// Establish a default value of rounds
 			rounds = ( rounds ) ? rounds : 5;
 			
-			// An array to store each rounds elapsed time.
+			// An array to store each rounds elapsed time
 			var roundTimes = [];
 			for ( var i = 0; i < rounds; i++ ) {
 				
-				// Initialize our starting timestamp.
+				// Initialize our starting timestamp
 				var startTime = (new Date).getTime();
 				
-				// Execute our callback containing our code.
+				// Execute our callback containing our code
 				try {					
 					callback()();					
 				} catch (e) {
 					console.log(e);
 				}
 				
-				// Initialize our closeing timestamp.
+				// Initialize our closeing timestamp
 				var closeTime = (new Date).getTime();
 				
-				// Calculate the elapsed time.
+				// Calculate the elapsed time
 				var elapsed = closeTime - startTime;
 				
-				// Save this rounds elapsed time in array.
+				// Save this rounds elapsed time in array
 				roundTimes.push( elapsed );
 			}
 			
-			// Calculate the average of the rounds elapsed time.
+			// Calculate the average of the rounds elapsed time
 			var roundsSum = 0;
 			for ( var i = 0; i < roundTimes.length; i++ ) {
 				roundsSum += parseInt( roundTimes[ i ] );
 			}
 			
-			// Return our average time in milaseconds.
+			// Return our average time in milaseconds
 			var average = roundsSum / roundTimes.length;
 			return average;
 		},
@@ -484,7 +390,7 @@
 			aLen = arguments.length,
 			plugin = $.fn.php;
 			
-		// Break apart a passed callback function to identify if it has a given name.
+		// Break apart a passed callback function to identify if it has a given name
 		var fName = "";
 		for ( var i = 0; i < aLen; i++ ) {
 			if ( jQuery.isFunction( args[i] ) ) {
@@ -494,14 +400,19 @@
 			} 
 		}
 		
-		// Reference the method (which determins our interface mode) that is being called (if any).
-		var mode = fName || method;
+		// Reference the method (which determins our interface mode) that is being called (if any)
+		var mode = cache.mode = ( fName || method );
 		
-		// Set our global callback and selector simultaneously if selector and callback provided.
+		// If method is anything but a string set our mode to default
+		if ( jQuery.type( mode ) !== "string" ) {
+			cache.mode = 'default';
+		}
+		
+		// Set our global callback and selector simultaneously if selector and callback provided
 		var instanceOfJquery = false, isFunction = false;
 		for ( var i = 0; i < aLen; i++ ) {
 						
-			// By default when a selector context is provided we update our global selector.
+			// By default when a selector context is provided we update our global selector
 			if ( args[i] instanceof jQuery || this instanceof jQuery ) {
 				
 				if ( this instanceof jQuery ) {
@@ -511,45 +422,40 @@
 					instanceOfJquery = true;
 				}
 				
-				// If argument length is 1 we assume only a selector is being set so we return.
+				// If argument length is 1 we assume only a selector is being set so we return
 				if ( aLen === 1 ) {
 					return cache.selected;
 				}
 			}
 			
-			// In some modes of operation such as 'bench' mode we are not setting our global callback.
+			// In some modes of operation such as 'bench' mode we are not setting our global callback
 			if ( jQuery.isFunction( args[i] ) && mode !== 'bench' ) {
 				
-				// If another function passes a callback we assume suspension of callback is over.
+				// If another function passes a callback we assume suspension of callback is over
 				$.fn.php.useCallback = true;
 				
 				cache.callback = args[i];
 				isFunction = true;
 				
-				// If argument length is 1 we assume only a callback is being passed and we return.
+				// If argument length is 1 we assume only a callback is being passed and we return
 				if ( aLen === 1 ) {
 					return plugin;
 				}
 			}
 		}
 		
-		// When both our trigger flags are set we return our plugin (our global context and callback have been set)
+		// When both trigger flags are set return our plugin
 		if ( instanceOfJquery === true && isFunction === true ) {
 			return plugin;
 		}
-		
-		// Certain strings passed as mode flags tell us which mode of operation to use or which method to call
+
+		// Build plugin interface based on passed mode flag
 		switch ( mode ) {
 			
-			// Call the plugin's initialization method
 			case 'init' :	
 				methods._init.apply( cache.selected, Array.prototype.slice.call( args, 1 ));
 				return plugin;
 				
-			/* When the 'multi' string is passed OR when a callback function is passed
-			 * that is named 'multi' we assume the user is providing a plain object
-			 * containing function/parameter name values pairs. 
-			 */
 			case 'multi' :
 				
 				// We find our object containing functions and parameters
@@ -562,7 +468,7 @@
 				// Create a data array to be returned by the user via the .data property
 				var resultsArr = [];
 				
-				// We augment our passed paramters to conform to our 'call' method.
+				// We augment our passed paramters to conform to our 'call' method
 				for ( func in phpObject ) {	
 					var passArgs = phpObject[ func ];
 					passArgs.unshift( func );		
@@ -572,59 +478,7 @@
 
 				plugin.data = resultsArr;
 				return plugin;
-
-			// 	The chain method interface
-			case 'chain' :
-				
-				// We restructure the arguments array, stripping any callbacks.
-				var cleanArgs = [];
-				for ( var arg in args ) {
-					if ( ! jQuery.isFunction( args[arg] )
-					     && args[arg] !== 'chain' ) {
-						cleanArgs.push( args[arg] );
-					}
-					if ( method === 'chain' ) {
-					}
-				}
-				
-				// Register our global parameter argument data. Must be in the form of an array.
-				cache.data = cleanArgs;
-				return plugin;
 								
-			// This interface operates identically to the default mode except we strip the 'call' command string.
-			case 'call' :	
-				
-				// We iterate over all arguments passed and remove any callbacks.
-				var cleanArgs = [];
-				for ( var arg in args ) {
-					if ( ! jQuery.isFunction( args[arg] ) ) {
-						cleanArgs.push( args[arg] );
-					}
-				}
-				
-				// Pass the fName as the first argument to our call method
-				if ( fName ) {
-					cleanArgs.unshift( fName );
-				} 
-						
-				methods.call.apply( cache.selected, Array.prototype.slice.call( cleanArgs, 1 ));
-				return plugin;
-
-			// The exec mode interface
-			case 'exec' :
-				
-				var cleanArgs = [];
-				for ( var i = 0; i < aLen; i++ ) {
-					if ( ! jQuery.isFunction( args[i] )
-						 && args[i] !== 'exec' ) {
-						cleanArgs.push( args[i] );
-					}
-				}
-
-				methods.exec.apply( cache.selected, Array.prototype.slice.call( cleanArgs ));
-				return plugin;
-						
-			// The block mode interface
 			case 'block' :	
 				
 				var cleanArgs = [];
@@ -635,9 +489,37 @@
 					}
 				}
 
-				return methods.block.apply( plugin, Array.prototype.slice.call( cleanArgs ));
+				return methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
+
+			case 'chain' :
 				
-			// This interfaces passes all args aside from the 'bench' string to our bench method.
+				// We restructure the arguments array, stripping any callbacks
+				var cleanArgs = [];
+				for ( var arg in args ) {
+					if ( ! jQuery.isFunction( args[arg] )
+					     && args[arg] !== 'chain' ) {
+						cleanArgs.push( args[arg] );
+					}
+				}
+				
+				// Register our global parameter argument data. Must be in the form of an array
+				cache.data = cleanArgs;
+				
+				return plugin;
+				
+			case 'exec' :
+				
+				var cleanArgs = [];
+				for ( var i = 0; i < aLen; i++ ) {
+					if ( ! jQuery.isFunction( args[i] )
+						 && args[i] !== 'exec' ) {
+						cleanArgs.push( args[i] );
+					}
+				}
+
+				methods.call.apply( cache.selected, Array.prototype.slice.call( cleanArgs ));
+				return plugin;
+				
 			case 'bench' :
 				
 				var cleanArgs = [];
@@ -649,10 +531,9 @@
 
 				return methods.bench.apply( plugin, Array.prototype.slice.call( cleanArgs ));
 					
-			// The default mode of operation is an interface to the call method.
 			default :
 				
-				// We iterate over all arguments passed and remove any callbacks.
+				// We iterate over all arguments passed and remove any callbacks
 				var cleanArgs = [];
 				for ( var arg in args ) {
 					if ( ! jQuery.isFunction( args[arg] ) ) {
