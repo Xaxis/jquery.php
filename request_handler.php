@@ -3,6 +3,11 @@
 // Set our error reporting level
 error_reporting(0); 
 
+// An array containing user files that should be included
+$includes = array(
+	//'function_definitions.php',
+);
+
 /* The blacklist array is used when the SEC_MODE configuration variable is set to 'blacklist'. When configured
  * to use the blacklist all functions listed in the array will be disabled.
  */
@@ -42,6 +47,13 @@ $config = array(
 		'whitelist' => $whitelist
 	)
 );
+
+// Include all user files
+if ( ! empty( $includes ) ) {
+	foreach ( $includes as $file ) {
+		include( $file );
+	}
+}
 
 /* The first data we look for from the client is which method request is being made. The method request is one
  * of our modes of operations and tells us which "method" to use in our switch statement.
