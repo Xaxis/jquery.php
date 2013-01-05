@@ -84,7 +84,7 @@
 			// Stores whether async mode is enabled
 			async: false,
 			
-			// User functions to pass to our global on initialization
+			// User functions to bind 
 			userFunctions: {}
 		},
 		
@@ -135,11 +135,6 @@
 				while ( n-- ) {
 					curMethod = curMethodClass[n];
 			
-					/* The value of the newly created method on the .php object is set to a self-invoking 
-					 * anonymous function which returns an anonymous function which calls our 'call' method
-					 * and finally returns the plugin object itself with any bound data returned from a PHP
-					 * function call.
-					 */
 					$.fn.php[curMethod] = (function( curMethod ) {
 						return function() {
 							var args = arguments, 
@@ -167,11 +162,7 @@
 								this.data = cache.data[0];
 								return this.data;
 										
-							/* Below we handle method chaining where no parameters are to be passed to
-							 * individual methods in the chain. The only paramters passed must be defined in
-							 * the .php method. Chained methods must abide by a logic that can work on the
-							 * returned results of the first function in the chain called.
-							 */
+							// Implement chaining mode
 							} else {
 								
 								switch ( fName ) {
@@ -282,7 +273,7 @@
 					
 				default :
 				
-					// Copy arguments array like object into an array
+					// Copy array like object into an array
 					var args = [];
 					for ( var i = 0; i < arguments.length; i++ ) {
 						args.push( arguments[i] );
@@ -305,7 +296,7 @@
 				jQuery.ajaxSetup({async: true});
 			}
 			
-			// The request object is built and sent to the server for handling
+			// Build the XHR object
 			var request = $.ajax({
 				url: config.path,
 				type: "POST",
