@@ -93,15 +93,7 @@ multiple ways to do nearly the same thing (call PHP's highlight_string function)
 
 ```javascript	
 // This is perhaps the simplest way of calling your PHP function
-P.highlight_string('I am a string.', true); 
- 
-// Passing the 'call' keyword is allowed but not required
-P('call', 'highlight_string', 'We just used a method using the call command string!', true);	
-
-// Assinging your callback with the function name call is also possible (again not required)		
-P(function call(data, self) {
-    $(self).append("<div><i>" + data + "</i></div>");
-}, 'highlight_string', 'A test string that is 36 characters!', true);	
+P.highlight_string('I am a string.', true);	
 
 // Passing the function you wish to use as a string as the first parameter
 P('highlight_string', 'A longer test string!', true);
