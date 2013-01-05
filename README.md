@@ -37,8 +37,8 @@ var P = $.fn.php;
 
 ### Initialization
 After we have included jquery and jquery.php in the head of our document we must call the init method. The
-path where the backend func_request library must be specified. User defined functions are setup here. We
-provide the names of all user defined functions we want to use in a space delimited list.
+path where request_handler.php exists must be specified. We provide the names of all user defined functions 
+we want to use in a space delimited list.
 
 ```javascript
 P('init', 
