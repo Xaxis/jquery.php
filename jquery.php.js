@@ -49,13 +49,9 @@
 			iconv : 'iconv iconv_get_encoding iconv_mime_decode iconv_mime_decode_headers iconv_mime_encode iconv_set_encoding iconv_strlen iconv_strpos iconv_strrpos iconv_substr ob_iconv_handler'
 		},
 		
-		// Here is where we store any user defined functions
-		userFunctions = {
-		},
-		
 		// Special case plugin functions
-		pluginFunctions = {
-			plugin: 'result plugin'
+		pluginMethods = {
+			plugin: 'bench block chain exec multi result'
 		},
 		
 		cache = {
@@ -73,7 +69,10 @@
 			selected: null,
 			
 			// Keep track of which operating mode
-			mode: 'default'
+			mode: 'default',
+			
+			// Keep track of which method were on
+			chainIndex: 0
 		},
 		
 		config = {
@@ -91,37 +90,32 @@
 		methods = {
 
 		/**
-		 * Initialize config values and method chaining.
+		 * Initialize configuration values and bind methods.
 		 * @param {Object} options An array of name/value pairs for configuration.
 		 * @return {Object} jQuery object.
 		 */
-		_init : function( options ) {
+		init : (function( options ) {
 			
-			// At runtime we first extend our config object with required run time values.
+			// Merge configuration options
 			$.extend( config, options );
 			
-			// Extend plugin methods with our coreFunctions object
-			var updatedFunctions = $.extend( coreFunctions, pluginFunctions );
+			// Extend plugin methods with our coreFunctions
+			var updatedFunctions = $.extend( 
+				coreFunctions, 
+				pluginMethods,
+				config.userFunctions );
 			
-			// We copy any potentially user defined functions into our userFunctions global.
-			userFunctions = config.userFunctions;
-			
-			// We make all of our core and user functions methods of the jquery.php object.
-			methods._chain();
+			// Bind methods to jquery.php
+			methods.chain();
 			
 			return this;
-		},
+		}),
 		
 		/**
 		 * Impliment object method creation of core and user defined functions.
 		 * @return {Object} jQuery object.
 		 */
-		_chain : function() {
-			
-			// Extend our coreFunctions object with any user defined functions if provided
-			if ( ! jQuery.isEmptyObject( userFunctions ) ) {
-				$.extend( coreFunctions, userFunctions );
-			}
+		chain : function() {
 			
 			var n = 0,
 				methodObj = coreFunctions,
@@ -140,60 +134,89 @@
 							var args = arguments, 
 								aLen = args.length,
 								fName = curMethod;
-							
-							// If parameters are passed chain mode isn't used
-							if ( aLen > 0 ) {
-								
-								// We iterate over all arguments passed and remove any callbacks.
-								var passArgs = [];
-								for ( var arg in args ) {
-									if ( ! jQuery.isFunction( args[arg] ) ) {
-										passArgs.push( args[arg] );
+
+							// Reroute core plugin methods
+							switch ( fName ) {		
+								case 'bench' :
+									cache.mode = 'bench';
+									return methods.bench.apply( this, Array.prototype.slice.call( arguments ));
+									
+								case 'block' :
+									cache.mode = 'block';
+									methods.call.apply( this, Array.prototype.slice.call( arguments ));
+									this.data = cache.data;
+									return this;
+									
+								case 'chain' :
+									cache.mode = 'chain';
+									cache.chainIndex = args[0];
+									return this;
+									break;
+									
+								case 'exec' :
+									cache.mode = 'exec';
+									methods.call.apply( this, Array.prototype.slice.call( arguments ));
+									this.data = cache.data;
+									return this;
+									
+								case 'multi' :
+									cache.mode = 'multi';
+									
+									// We find our object containing functions and parameters
+									for ( var i = 0; i < aLen; i++ ) {
+										if ( jQuery.isPlainObject( args[i] ) ) {
+											var phpObject = args[i];
+										}
+									}
+
+									// We augment our passed paramters to conform to our 'call' method
+									var resultsArr = [];
+									for ( func in phpObject ) {	
+										var passArgs = phpObject[ func ];
+										passArgs.unshift( func );		
+										methods.call.apply( this, Array.prototype.slice.call( passArgs ) );
+										resultsArr.push( cache.data[0] );
+									} 
+									
+									this.data = resultsArr;
+									return this;
+																		
+								case 'result' :
+									this.data = cache.data[0];
+									return this.data;
+							}
+					
+							// We iterate over all arguments passed and remove any callbacks.
+							var cleanArgs = [];
+							for ( var i = 0; i < aLen; i++ ) {
+								if ( ! jQuery.isFunction( args[i] ) ) {
+									
+									if ( jQuery.isArray( args[i] )
+									&& args[i].length === 0 ) {
+										cleanArgs.push( cache.data[0] );
+									} else {
+										cleanArgs.push( args[i] );
 									}
 								}
-								
-								// We add our function request to the begening of the array
-								passArgs.unshift( curMethod );
-								
-								// Execute the call method
-								methods.call.apply( cache.selected, Array.prototype.slice.call( passArgs ));
-								
-								// Bind our return result to the data property of the plugin.
-								this.data = cache.data[0];
-								return this.data;
-										
-							// Implement chaining mode
-							} else {
-								
-								switch ( fName ) {
-									
-									/* The 'result' plugin method returns data to variables for 'exec' and 'block' 
-									 * modes which do not use the 'call' mode and thus would not normally have data
-									 * returned.
-									 */
-									case 'result' :
-										this.data = cache.data[0];
-										return this.data;
-										break;
-										
-									/* The 'plugin' plugin method returns the plugin object for 'exec' and 'block'
-									 * which do not use the 'call' mode.
-									 */										
-									case 'plugin' :
-										this.data = cache.data[0];
-										return this;
-										break;
-										
+							}
+							
+							// Add function request to arguments
+							cleanArgs.unshift( fName );
+							
+							// Execute the call method
+							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
+							
+							// Bind returned result to data property
+							this.data = cache.data;
+							
+							if ( cache.mode == 'chain' ) {
+								cache.chainIndex -= 1;
+								if ( cache.chainIndex > 0 ) {
+									return this;
+								} else {
+									return this.data[0];
 								}
-								
-								// Place function request name at the start of our array
-								cache.data.unshift( fName );
-								
-								// Execute the call method
-								methods.call.apply( cache.selected, Array.prototype.slice.call( cache.data ));
-								
-								// Bind returned results to the data property
-								this.data = cache.data[0];
+							} else {
 								return this;
 							}
 							
@@ -343,7 +366,7 @@
 				
 				// Execute our callback containing our code
 				try {					
-					callback()();					
+					callback();					
 				} catch (e) {
 					console.log(e);
 				}
@@ -364,9 +387,16 @@
 				roundsSum += parseInt( roundTimes[ i ] );
 			}
 			
-			// Return our average time in milaseconds
-			var average = roundsSum / roundTimes.length;
-			return average;
+			// Compute average time in milaseconds
+			var average = roundsSum / parseInt( roundTimes.length );
+			
+			// Store our computed results globally
+			cache.data = [average];
+			
+			// Store our computed results into our plugin
+			this.data = cache.data;
+			
+			return this;
 		},
 
 	};
@@ -380,6 +410,11 @@
 		var args = arguments,
 			aLen = arguments.length,
 			plugin = $.fn.php;
+
+		// When no arguments return the plugin
+		if ( aLen === 0 ) {
+			return plugin;
+		}
 			
 		// Break apart a passed callback function to identify if it has a given name
 		var fName = "";
@@ -436,7 +471,7 @@
 		}
 		
 		// When both trigger flags are set return our plugin
-		if ( instanceOfJquery === true && isFunction === true ) {
+		if ( instanceOfJquery === true && isFunction === true && aLen === 2 ) {
 			return plugin;
 		}
 
@@ -444,7 +479,7 @@
 		switch ( mode ) {
 			
 			case 'init' :	
-				methods._init.apply( cache.selected, Array.prototype.slice.call( args, 1 ));
+				methods.init.apply( cache.selected, Array.prototype.slice.call( args, 1 ));
 				return plugin;
 				
 			case 'multi' :
@@ -466,50 +501,48 @@
 					methods.call.apply( plugin, Array.prototype.slice.call( passArgs ) );
 					resultsArr.push( cache.data[0] );
 				} 
-
+				
 				plugin.data = resultsArr;
 				return plugin;
 								
 			case 'block' :	
+				var cleanArgs = [];
+				for ( var i = 0; i < aLen; i++ ) {
+					if ( jQuery.isPlainObject( args[i] ) ) {
+						cleanArgs.push( args[i] );
+					}
+				}
 				
+				methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
+				plugin.data = cache.data;
+				return plugin;
+
+			case 'chain' :
 				var cleanArgs = [];
 				for ( var i = 0; i < aLen; i++ ) {
 					if ( ! jQuery.isFunction( args[i] )
-						 && args[i] !== 'block' ) {
+					     && args[i] !== 'chain' ) {
+						cleanArgs.push( args[i] );
+					}
+				}
+				
+				if ( cleanArgs[0] ) {
+					cache.chainIndex = cleanArgs[0];
+				} else {
+					cache.chainIndex = 0;
+				}
+				
+				return plugin;
+				
+			case 'exec' :
+				var cleanArgs = [];
+				for ( var i = 0; i < aLen; i++ ) {
+					if ( jQuery.type( args[i] ) === "string" && args[i] !== 'exec' ) {
 						cleanArgs.push( args[i] );
 					}
 				}
 
 				return methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
-
-			case 'chain' :
-				
-				// We restructure the arguments array, stripping any callbacks
-				var cleanArgs = [];
-				for ( var arg in args ) {
-					if ( ! jQuery.isFunction( args[arg] )
-					     && args[arg] !== 'chain' ) {
-						cleanArgs.push( args[arg] );
-					}
-				}
-				
-				// Register our global parameter argument data. Must be in the form of an array
-				cache.data = cleanArgs;
-				
-				return plugin;
-				
-			case 'exec' :
-				
-				var cleanArgs = [];
-				for ( var i = 0; i < aLen; i++ ) {
-					if ( ! jQuery.isFunction( args[i] )
-						 && args[i] !== 'exec' ) {
-						cleanArgs.push( args[i] );
-					}
-				}
-
-				methods.call.apply( cache.selected, Array.prototype.slice.call( cleanArgs ));
-				return plugin;
 				
 			case 'bench' :
 				
