@@ -10,11 +10,11 @@
 	
 	var 
 		
-		// Reference to our plugin
+		// Reference to the plugin
 		plugin = $.fn.php,
 		
-		// Here we store core PHP function names
-		coreFunctions = {
+		// Reference to core PHP methods
+		coreMethods = {
 			array : 'array array_change_key_case array_chunk array_combine array_count_values array_diff array_diff_assoc array_diff_key array_diff_uassoc array_diff_ukey array_fill array_fill_keys array_filter array_flip array_intersect array_intersect_assoc array_intersect_key array_intersect_uassoc array_intersect_ukey array_key_exists array_keys array_map array_merge array_merge_recursive array_multisort array_pad array_pop array_product array_push array_rand array_reduce array_reverse array_search array_shift array_slice array_splice array_sum array_udiff array_udiff_assoc array_udiff_uassoc array_uintersect array_uintersect_assoc array_uintersect_uassoc array_unique array_unshift array_values array_walk array_walk_recursive arsort asort compact count current each end extract in_array key key_exists krsort ksort list natcasesort natsort next pos prev range reset rsort shuffle sizeof sort uasort uksort usort',
 			calendar : 'cal_days_in_month cal_from_jd cal_info cal_to_jd easter_date easter_days frenchtojd gregoriantojd jddayofweek jdmonthname jdtofrench jdtogregorian jdtojewish jdtojulian jdtounix jewishtojd juliantojd unixtojd',
 			character : 'ctype_alnum ctype_alpha ctype_cntrl ctype_digit ctype_graph ctype_lower ctype_print ctype_punct ctype_space ctype_upper ctype_xdigit',
@@ -51,7 +51,8 @@
 		
 		// Special case plugin functions
 		pluginMethods = {
-			plugin: 'bench block chain exec multi result'
+			core: 'bench block chain exec multi',
+			data: 'result end'
 		},
 		
 		cache = {
@@ -69,10 +70,7 @@
 			selected: null,
 			
 			// Keep track of which operating mode
-			mode: 'default',
-			
-			// Keep track of which method were on
-			chainIndex: 0
+			mode: 'default'
 		},
 		
 		config = {
@@ -83,8 +81,8 @@
 			// Stores whether async mode is enabled
 			async: false,
 			
-			// User functions to bind 
-			userFunctions: {}
+			// User methods to bind 
+			userMethods: {}
 		},
 		
 		methods = {
@@ -99,36 +97,34 @@
 			// Merge configuration options
 			$.extend( config, options );
 			
-			// Extend plugin methods with our coreFunctions
+			// Extend plugin methods with our coreMethods
 			var updatedFunctions = $.extend( 
-				coreFunctions, 
+				coreMethods, 
 				pluginMethods,
-				config.userFunctions );
+				config.userMethods );
 			
 			// Bind methods to jquery.php
-			methods.chain();
+			methods.bind();
 			
 			return this;
 		}),
 		
 		/**
-		 * Impliment object method creation of core and user defined functions.
-		 * @return {Object} jQuery object.
+		 * Bind core and user defined methods to the plugin
+		 * @return {Object} jQuery object
 		 */
-		chain : function() {
-			
+		bind : function() {			
 			var n = 0,
-				methodObj = coreFunctions,
 				curMethod = null;
 
-			// Attach methods to the jquery.php object
-			for ( methodClass in methodObj ) { 
-				n = coreFunctions[ methodClass ].split(" ").length;
-				var curMethodClass = methodObj[methodClass].split(" ");
+			for ( methodClass in coreMethods ) { 
+				n = coreMethods[ methodClass ].split(" ").length;
+				var curMethodClass = coreMethods[methodClass].split(" ");
 				
 				while ( n-- ) {
 					curMethod = curMethodClass[n];
 			
+					// Build method attachment
 					$.fn.php[curMethod] = (function( curMethod ) {
 						return function() {
 							var args = arguments, 
@@ -149,7 +145,6 @@
 									
 								case 'chain' :
 									cache.mode = 'chain';
-									cache.chainIndex = args[0];
 									return this;
 									break;
 									
@@ -161,15 +156,12 @@
 									
 								case 'multi' :
 									cache.mode = 'multi';
-									
-									// We find our object containing functions and parameters
 									for ( var i = 0; i < aLen; i++ ) {
 										if ( jQuery.isPlainObject( args[i] ) ) {
 											var phpObject = args[i];
 										}
 									}
 
-									// We augment our passed paramters to conform to our 'call' method
 									var resultsArr = [];
 									for ( func in phpObject ) {	
 										var passArgs = phpObject[ func ];
@@ -177,16 +169,19 @@
 										methods.call.apply( this, Array.prototype.slice.call( passArgs ) );
 										resultsArr.push( cache.data[0] );
 									} 
-									
 									this.data = resultsArr;
 									return this;
 																		
 								case 'result' :
 									this.data = cache.data[0];
 									return this.data;
+									
+								case 'end' :
+									this.data = cache.data[0];
+									return this.data;
 							}
 					
-							// We iterate over all arguments passed and remove any callbacks.
+							// Build arguments listing for next function call
 							var cleanArgs = [];
 							for ( var i = 0; i < aLen; i++ ) {
 								if ( ! jQuery.isFunction( args[i] ) ) {
@@ -203,22 +198,12 @@
 							// Add function request to arguments
 							cleanArgs.unshift( fName );
 							
-							// Execute the call method
+							// Execute request
 							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
 							
-							// Bind returned result to data property
+							// Set data property before returning
 							this.data = cache.data;
-							
-							if ( cache.mode == 'chain' ) {
-								cache.chainIndex -= 1;
-								if ( cache.chainIndex > 0 ) {
-									return this;
-								} else {
-									return this.data[0];
-								}
-							} else {
-								return this;
-							}
+							return this;
 							
 						}
 					})( curMethod );
@@ -235,7 +220,7 @@
 		 * @param {String} phpObj A JSON encoded string from the server.
 		 * @return {Object} jQuery object.
 		 */
-		_type : function( phpObj ) {
+		type : function( phpObj ) {
 			var obj = JSON.parse( phpObj ),
 				type = obj['type'],
 				data = obj['data'];
@@ -328,7 +313,7 @@
 				success: function( data ) {
 					
 					// Convert our returned string to the correct type
-					var parsedData = methods._type( data );
+					var parsedData = methods.type( data );
 					
 					// Stores our returned results globally
 					cache.data = parsedData;
@@ -524,12 +509,6 @@
 					     && args[i] !== 'chain' ) {
 						cleanArgs.push( args[i] );
 					}
-				}
-				
-				if ( cleanArgs[0] ) {
-					cache.chainIndex = cleanArgs[0];
-				} else {
-					cache.chainIndex = 0;
 				}
 				
 				return plugin;
