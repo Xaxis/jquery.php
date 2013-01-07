@@ -117,14 +117,17 @@ Mode methods:
 * `php.block( blockObject )`
 	* Implements the blocking mode interface
 	* Allows for passing JSON objects of PHP to the server
+    
 * `php.chain( methodCount )`
 	* Implements the method chaining mode
 	* Is the default method of operation
 	* Used to chain PHP functions together in logical units
 	* Calling `chain` directly is not required behavior
+    
 * `php.exec( codeString )`
 	* Implements the execution mode interface
 	* Used to exicute arbitrary strings of PHP code
+    
 * `php.multi( multiObject )`
 	* Implements the multiple mode interface
 	* Used as an easy shorthand to send multiple function requests
