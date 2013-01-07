@@ -109,6 +109,29 @@ P.context($("#results1")).callback(function(data, self) {
 });
 ```
 
+### Plugin Methods
+Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
+with the various core methods of the plugin.
+
+Mode methods: 
+* `block` 
+* `chain` 
+* `exec` 
+* `multi`
+
+Setter methods:
+* `callback` 
+* `context`
+
+Getter methods:
+* `end`
+* `result`
+
+Utility methods:
+* `bench`
+* `clear`
+* `repeat`
+
 ### Returning Values to Variables
 In many situations we will not be working with the DOM at all. We'll simply want to return results from PHP
 and work with them directly in our JavaScript. There are a few different ways in which jquery.php returns
