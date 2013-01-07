@@ -113,6 +113,10 @@ P.context($("#results1")).callback(function(data, self) {
 Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
 with the various core methods of the plugin.
 
+### Plugin Methods
+Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
+with the various core methods of the plugin.
+
 Mode methods: 
 * `php.block( blockObject )`
 	* Implements the blocking mode interface
@@ -137,8 +141,8 @@ Getter/Setter methods:
 * `php.callback( callback[, *] )`
 	* Sets the global callback function
     * Passing a function sets the global callback and re-activates the `useCallback` property
-    * Passing `true` sets the `useCallback` property to true
-	* Passing no arguments returns the global callback
+    * Passing `true` or any "truthy" value sets the `useCallback` property to true
+	* Passing `false` or any "falsy" value sets the `useCallback` property to false
     * Passing no arguments sets the `useCallback` property to false
 * `php.context( context[, *] )`
 	* Sets the global selector context
@@ -153,8 +157,15 @@ Closing methods:
 
 Utility methods:
 * `php.bench( selfInvokingCallback )`
+	* Implements the bench performance method
+    * Passing a self invoking function containing code returns the time in milaseconds it takes to process
+      that code including request time to the server (if any function requests are made within that code).
+    * Like other jquery.php methods the value is not directly returned until you call `end` or `result` on
+      the method.
 * `php.clear()`
+	* Clears the chain buffer which records all requests made as well as those requests returned values
 * `php.repeat()`
+	* Repeats all function requests made to the server
 
 ### Returning Values to Variables
 In many situations we will not be working with the DOM at all. We'll simply want to return results from PHP
