@@ -87,7 +87,7 @@ P($("#results1"), function(data, self) {
 
 ```
 
-### Usage scenario (Simple)
+### Basic Usage
 The following are some simple usage scenarios. It should be noted that the examples below demonstrate
 multiple ways to do nearly the same thing (call PHP's highlight_string function). 
 
@@ -117,7 +117,7 @@ $("#results1").php('highlight_string', function(data, self) {
 $("#results1").php('highlight_string', 'Yet another string!', true);
 ```
 
-### Usage scenario (Returning Values)
+### Returning Values to Variables
 Many times we have no need to work with the DOM and our returned results. Data can be returned to variables in
 a number of different ways. The `result()` and `end()` methods both work to return data. Additionally we can use
 the `data` property to return our data within an array.
