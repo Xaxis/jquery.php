@@ -51,7 +51,7 @@
 		
 		// Special case plugin functions
 		pluginMethods = {
-			core: 'bench block chain exec multi',
+			core: 'bench block chain exec multi callback context',
 			data: 'result end repeat clear'
 		},
 		
@@ -152,8 +152,7 @@
 								case 'chain' :
 									cache.mode = 'chain';
 									return this;
-									break;
-									
+																		
 								case 'exec' :
 									cache.mode = 'exec';
 									methods.call.apply( this, Array.prototype.slice.call( arguments ));
@@ -204,6 +203,24 @@
 								case 'clear' :
 									cache.chainBuffer.request = [];
 									cache.chainBuffer.data = [];
+									return this;
+									
+								case 'context' :
+									cache.mode = 'context';
+									for ( var i = 0; i < aLen; i++ ) {
+										if ( args[i] instanceof jQuery ) {
+											cache.selected = args[i];		
+										}
+									}
+									return this;
+									
+								case 'callback' :
+									cache.mode = 'callback';
+									for ( var i = 0; i < aLen; i++ ) {
+										if ( jQuery.isFunction( args[i] ) ) {
+											cache.callback = args[i];
+										}
+									}
 									return this;
 							}
 					
