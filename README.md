@@ -2,10 +2,10 @@
 ##A versitile jQuery plugin implementation
 
 	A versitile wrapper for using PHP in JavaScript. Allows for quickly writing web applications in 
-    multi-code situations. You can define and use custom PHP functions directly within JavaScript. 
+    	multi-code situations. You can define and use custom PHP functions directly within JavaScript. 
 	By default you can easily gain access to most of PHP's core functions within JavaScript without 
-    the overhead and implementation issues often found when using JavaScript libraries to emulate PHP 
-    functions. See features section for more details on provided functionality.
+    	the overhead and implementation issues often found when using JavaScript libraries to emulate PHP 
+    	functions. See features section for more details on provided functionality.
 
   Fork me @ https://github.com/Xaxis/jqueryphp
 
@@ -136,25 +136,25 @@ console.log( data1 ); // ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
 ```
 
 ### Basic Usage
-The following are some simple usage scenarios. It should be noted that the examples below demonstrate
-multiple ways to do nearly the same thing (call PHP's highlight_string function). 
+The following are some simple usage scenarios. jquery.php attempts to provide a variety of different mechanisms
+or interfaces that do the same thing. In other words jquery.php trys to abide by the, "there are many ways to 
+skin a cat" principle as it relates to API design.
+
+There are a few important points to keep in mind:
+* You may assign a context or a callback at any time
+* You do not have to work with the DOM. Returning values to variables is perfectly valid behavior.
 
 ```javascript	
-// This is perhaps the simplest way of calling your PHP function
+// This is perhaps the simplest way of calling a PHP function
 P.highlight_string('I am a string.', true);	
 
-// Passing the function you wish to use as a string as the first parameter
+// You could also call a function by passing its name as the first parameter followed by the functions parameters
 P('highlight_string', 'A longer test string!', true);
 
 // Assinging the PHP function you wish to call as the name of the callback
 P(function highlight_string(data, self) {
     $(self).append("<div><u>" + data + "</u></div>");
 }, 'A shorter string!', true);
-
-// Calling your PHP function by passing a string
-P('highlight_string', function(data, self) {
-    $(self).append("<div><u style='color: red'>" + data + "</div>");
-}, 'This will be the longest string passed to strlen yet!', true);
 
 // Calling your function while choosing a new selector context and setting a new callback
 $("#results1").php('highlight_string', function(data, self) {
@@ -163,6 +163,12 @@ $("#results1").php('highlight_string', function(data, self) {
 
 // Calling your function while choosing a new selector context without setting a callback
 $("#results1").php('highlight_string', 'Yet another string!', true);
+
+// Turning off the usage of callbacks
+P.useCallback = false;
+
+// Returning a functions return value to a JavaScript variable
+var highlightedString = P.highlight_string('some string').end();
 ```
 
 ### Block Mode
