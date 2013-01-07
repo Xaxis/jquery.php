@@ -119,7 +119,7 @@ $("#results1").php('highlight_string', 'Yet another string!', true);
 
 ### Usage scenario (Returning Values)
 Many times we have no need to work with the DOM and our returned results. Data can be returned to variables in
-a number of different ways. The `result()` and `end()` method both work to return data. Additionally we can use
+a number of different ways. The `result()` and `end()` methods both work to return data. Additionally we can use
 the `data` property to return our data within an array.
 
 ```javascript
@@ -130,14 +130,14 @@ P.useCallback = false;
 var strLenA = P.strlen('some string').result();
 var strLenB = P.strlen('another string').end();
 var totalStrLen = strLenA + strLenB;
-console.log( totalStrLen );	// 25
+console.log( totalStrLen ); // 25
 
 // Returns data in an array
 var data1 = P.crypt("Some Crypt String").data;
-console.log( data1 );		// ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
+console.log( data1 ); // ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
 ```
 
-### Usage scenario (Block Mode)
+### Block Mode
 Perhaps one of the most powerful modes provided is block mode. In block mode you can pass a JSON object
 containing PHP pseudo-code to be executed by PHP. Unlike other modes, code and function requests are not
 executed and returned one at a time. Instead the entire "block" of JSON pseudo-code is executed on the
@@ -188,7 +188,7 @@ var pageContents = P('block', codeBlock).result();
 console.log(pageContents);
 ```
 
-### Usage scenario (Multi Mode)
+### Multi Mode
 Multi mode allows you to call consecutive PHP functions as an object by passing the function name as
 the property. Each property references a an array of parameters to be passed to that function. When we
 return the results of a multi call to a variable an array is returned containing all the returned values.
@@ -226,7 +226,7 @@ $("#results4").php('multi',
 });
 ```
 
-### Usage scenario (Exec Mode)
+### Exec Mode
 Exec mode allows you to pass arbitrary strings of PHP code to be executed. This mode is disabled by default
 on the backend. It is advisable to only use this mode in development stages.
 
@@ -245,7 +245,7 @@ var execData = P('exec', code).result();
 console.log( execData );
 ```
 
-### Usage scenario (Chain Mode)
+### Chain Mode
 The below is an example of calling PHP functions using the chain mode pattern. We pass our parameters to be
 acted on to our plugin method directly. No parameters should be sent to individual functions in the chain.
 All functions in the chain must be able to work on the returned results of the function before itself in
@@ -277,7 +277,7 @@ var result = P('chain', 8, 3).pow().tan().abs().data;
 console.log( result );
 ```
 
-### Performance bench testing
+### Performance & Bench Testing
 In many situations we would like to determine the latency involved with a given code block. The bench 
 method was created to test the total time in milaseconds it takes to run your code (inclusive of response
 time to and from the server). To use the bench method we must pass a specially structured callback
@@ -285,14 +285,12 @@ function like that used below. Notice the return value is an inline annonymous f
 within is code you would like to test.
 
 ```javascript
-var testTime = P('bench', function() {
-	return (function() {
+var testTime = P('bench', (function() {
 			
-		var strLenA = P.strlen('some string');
-		var strLenB = P.strlen('another string');
-		var totalStrLen = strLenA + strLenB;
+	var strLenA = P.strlen('some string').end();
+	var strLenB = P.strlen('another string').end();
+	var totalStrLen = strLenA + strLenB;
 			
-});
-}, 3);
+}), 3).end();
 console.log('Test Time: ' + testTime + ' ms');
 ```
