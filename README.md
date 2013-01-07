@@ -1,11 +1,11 @@
 #jQuery plugin for writing and using PHP within JavaScript
 ##A versitile jQuery plugin implementation
 
-	A versitile wrapper for using PHP in jQuery/JavaScript. Allows for quickly writing web applications 
-	in multi-code situations. Now you can define and use your PHP functions directly within JavaScript. 
-	By default you can easily gain access to all of PHP's core functions from your JavaScript without the
-	overhead of using JavaScript libraries to emulate PHP functions. See features section for more details 
-	on provided functionality.
+	A versitile wrapper for using PHP in JavaScript. Allows for quickly writing web applications in 
+    multi-code situations. You can define and use custom PHP functions directly within JavaScript. 
+	By default you can easily gain access to most of PHP's core functions within JavaScript without 
+    the overhead and implementation issues often found when using JavaScript libraries to emulate PHP 
+    functions. See features section for more details on provided functionality.
 
   Fork me @ https://github.com/Xaxis/jqueryphp
 
@@ -54,28 +54,48 @@ P('init',
 });
 ```
 
-### Defining a global callback
-Define a global callback function so we don't have to pass one to our function requests every time if we're working
-with the DOM.
+### Defining a Global Callback
+Define a global callback function so you don't have to pass one to a function requests every call if 
+we're working with the DOM.
 
 ```javascript
 // Setting the global callback is as simple as passing a callback function to our plugin
 P(function (data, self) {
     $(self).append("<div>" + data + "</div>");
 });
+
+// Or we could use our callback method to do the same thing
+P.callback(function (data, self) {
+    $(self).append("<div>" + data + "</div>");
+});
 ```
 
-### Defining a global selector context
-Here we specify the jquery selected elements we would like our bound context to be. This will override
+Notice in both instances above we're defining two arguments to our callback: `data` and `self`. `data`
+will hold the returned values from the server and `self` is used as a reference to our selector context.
+
+The global callback is used when working with elements in the DOM. You are not required to define a 
+callback at all if your intentions are to work programatically with PHP in JavaScript. See Returning 
+Values to Variables.
+
+### Defining a Global Selector Context
+Here we specify the jQuery selected elements we would like our bound context to be. This will override
 any previously selected contexts. If no context is chosen the plugin object becomes our context.
 
 ```javascript
 // Setting our selector context can also be done independently by passing our selector object
 P($("#results1"));
+
+// Or we could use our context method to do the same thing
+P.context($("#results1"));
 ```
 
-### Defining the global selector and callback simultaneously
-It will often be easier to specify both the selector context and callback at the same time.
+The global selector context is used when targeting elements you would like to work with in the DOM. You 
+are not required to use a selector context if your intentions are to work programatically with PHP in
+JavaScript.
+
+### Defining the Global Selector Context and Callback Simultaneously
+It will often be easier to specify both the selector context and callback at the same time. This way you
+won't need to set it while calling PHP functions and working with DOM elements.
 
 ```javascript
 // We can set our global callback and selector context at the same time
@@ -83,6 +103,10 @@ P($("#results1"), function(data, self) {
     $(self).append("<div id='whatever'>" + data + "</div>");
 });
 
+// Another way we could do this would be calling the `callback` and `context` method as a chain
+P.context($("#results1")).callback(function(data, self) {
+    $(self).append("<div id='whatever'>" + data + "</div>");
+});
 ```
 
 ### Basic Usage
@@ -224,7 +248,7 @@ P.useCallback = true;
 
 ### Multi Mode
 Multi mode allows you to call consecutive PHP functions as an object by passing the function name as
-the property. Each property references a an array of parameters to be passed to that function. When we
+the property. Each property references an array of parameters to be passed to that function. When we
 return the results of a multi call to a variable an array is returned containing all the returned values.
 
 ```javascript
@@ -238,7 +262,7 @@ P(function multi(data, self) {
     sqrt : [43]
 });
 
-// If we don't want our following function calls to use our global callback we can suspend the callback
+// If we don't want function calls to use the global callback we can suspend the callback
 P.useCallback = false;
 
 // Now we can return an array of values from our multi mode call
