@@ -15,15 +15,14 @@
 ## FEATURES:
 * Access to PHP core & user defined functions as JavaScript methods
 * Dynamic JSON pseudo code to PHP translation
-* Execution of PHP strings within JavaScript
+* Execution of arbitrary PHP strings within JavaScript
 * Chaining of PHP functions as JavaScript methods
-* Performance testing functionality
+* Caching support to leverage multiple function requests
 * Security procedures to block unintended PHP usage from the client
-* Client side caching support for multiple function requests
-* Whitelist/Blacklist operations modes for PHP function calls
-* Wide range of design patterns for calling and using PHP functions
+* Wide range of design patterns for using PHP directly in JavaScript
 * Great flexibility while working with returned results and the DOM
 * Automatic type conversion of returned results into JavaScript types
+* Performance and bench testing functionality to calculate latency
 
 ## EXAMPLES:
 
@@ -37,8 +36,7 @@ var P = $.fn.php;
 
 ### Initialization
 After we have included jquery and jquery.php in the head of our document we must call the init method. The
-path where request_handler.php exists must be specified. We provide the names of all user defined functions 
-we want to use in a space delimited list.
+path where request_handler.php exists must be specified.
 
 ```javascript
 P('init', 
@@ -57,8 +55,8 @@ P('init',
 ```
 
 ### Defining a global callback
-Here we can define a global callback function so we don't have to pass one to our function requests every time
-if we're using the context of jquery selected elements.
+Define a global callback function so we don't have to pass one to our function requests every time if we're working
+with the DOM.
 
 ```javascript
 // Setting the global callback is as simple as passing a callback function to our plugin
@@ -69,7 +67,7 @@ P(function (data, self) {
 
 ### Defining a global selector context
 Here we specify the jquery selected elements we would like our bound context to be. This will override
-any previously selected contexts.
+any previously selected contexts. If no context is chosen the plugin object becomes our context.
 
 ```javascript
 // Setting our selector context can also be done independently by passing our selector object
@@ -77,7 +75,7 @@ P($("#results1"));
 ```
 
 ### Defining the global selector and callback simultaneously
-Sometimes it will be easier to specify both the global selector context and callback at the same time.
+It will often be easier to specify both the selector context and callback at the same time.
 
 ```javascript
 // We can set our global callback and selector context at the same time
@@ -143,11 +141,11 @@ containing PHP pseudo-code to be executed by PHP. Unlike other modes, code and f
 executed and returned one at a time. Instead the entire "block" of JSON pseudo-code is executed on the
 server and then returned.
 
-```javascript    
-// We structure a JSON block of data and function requests to be passed to the server 
-var codeBlock = {
-    str: "Let's use PHP's file_get_contents()!",
-    opts: 
+```javascript 
+// Perhaps the easiest manner to use block mode is as follows   
+P.block({
+    $str: "Let's use PHP's file_get_contents()!",
+    $opts: 
     [
         {
             http: {
@@ -157,35 +155,71 @@ var codeBlock = {
             }
         }
     ],
-    context: 
+    $context: 
     {
-        stream_context_create: ['opts']
+        stream_context_create: ['$opts']
     },
-    contents: 
+    $contents: 
     {
-        file_get_contents: ['http://www.williamneeley.com/', false, 'context']
+        file_get_contents: ['http://www.williamneeley.com/', false, '$context']
     },
-    html: 
+    $html: 
     {
-        htmlentities: ['contents']
+        htmlentities: ['$contents']
     }
-}
+});
 
-// Following the design pattern of the rest of our mode options we can of course use our block mode functionality
-// while defining a callback.
-P(function block(data, self) {
-    $(self).append("<div style='border:5px dotted green; white-space:pre-wrap;'>"+data+"</div>");
-}, codeBlock);
+// Let's switch the selector context and assign a different callback
+P($("#results2"), function (data, self) {
+    $(self).append("<div style='color: green'>" + data + "</div>");
+});
 
-// Our code block is passed to the block function and the data is returned to the callback assigned to it.
+// We create an identical object as above and store it in the variable `codeBlock`
+var codeBlock = 
+{
+    $str: "Let's use PHP's file_get_contents()!",
+    $opts: 
+    [
+        {
+            http: {
+                method: "GET",
+                header: "Accept-language: en\r\n" +
+                        "Cookie: foo=bar\r\n"
+            }
+        }
+    ],
+    $context: 
+    {
+        stream_context_create: ['$opts']
+    },
+    $contents: 
+    {
+        file_get_contents: ['http://www.williamneeley.com/', false, '$context']
+    },
+    $html: 
+    {
+        htmlentities: ['$contents']
+    }
+};
+
+// Returns the results of our codeBlock request to the selected context
 P('block', codeBlock);	
 
-// We suspend our callback so the global callback is not used
+// Now we disable our usage of a callback all together
 P.useCallback = false;
 
-// Optionally we can store any returned results from our block function directly to a JavaScript variable.
-var pageContents = P('block', codeBlock).result();
-console.log(pageContents);
+// We want to return our computed results to a variable and don't want to effect the DOM
+var result = P('block', codeBlock).result();
+var data = P('block', codeBlock).data;
+console.log( result, data );
+
+// Additionally it is possible to set a new context and callback while making any type of request
+P('block', $("#results3"), function(data, self) {
+    $(self).append("<div style='border:5px dotted orange; white-space:pre-wrap;'>"+data+"</div>");
+}, codeBlock);
+
+// Turning the `useCallback` property is not required. Passing a callback in any request reactivates it
+P.useCallback = true;
 ```
 
 ### Multi Mode
