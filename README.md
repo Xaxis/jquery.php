@@ -26,7 +26,7 @@
 
 ## EXAMPLES:
 
-### Shortcut reference
+### Shortcut Reference
 For ease of use we define a shortcut reference which we will use throughout the rest of our examples. This
 is only recommended behavior. You can of course use the plugin through $.fn.php at anytime.
 
@@ -34,7 +34,7 @@ is only recommended behavior. You can of course use the plugin through $.fn.php 
 var P = $.fn.php;
 ```
 
-### Initialization
+### Initialization & Configuration
 After we have included jquery and jquery.php in the head of our document we must call the init method. The
 path where request_handler.php exists must be specified.
 
