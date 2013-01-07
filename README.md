@@ -109,6 +109,32 @@ P.context($("#results1")).callback(function(data, self) {
 });
 ```
 
+### Returning Values to Variables
+In many situations we will not be working with the DOM at all. We'll simply want to return results from PHP
+and work with them directly in our JavaScript. There are a few different ways in which jquery.php returns
+data.
+1. The `end` method returns data in raw form. That is it returns data outside of the array that jquery.php
+stores it in.
+2. The `data` property returns data within an array that jquery.php stores it in.
+3. Both ways of retrieving data share one thing in common: you call them at the end of a request sequence.
+4. Since jquery.php was designed to work with jQuery and the DOM it is usually prudent to set the `useCallback`
+property to `false` before sequences of code that work with returned values directly.
+
+```javascript
+// We suspend our callback so the global callback is not used
+P.useCallback = false;
+
+// Both .end() and .data return data to variables
+var strLenA = P.strlen('some string').end();
+var strLenB = P.strlen('another string').end();
+var totalStrLen = strLenA + strLenB;
+console.log( totalStrLen ); // 25
+
+// .data Returns data in an array
+var data1 = P.crypt("Some Crypt String").data;
+console.log( data1 ); // ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
+```
+
 ### Basic Usage
 The following are some simple usage scenarios. It should be noted that the examples below demonstrate
 multiple ways to do nearly the same thing (call PHP's highlight_string function). 
@@ -137,26 +163,6 @@ $("#results1").php('highlight_string', function(data, self) {
 
 // Calling your function while choosing a new selector context without setting a callback
 $("#results1").php('highlight_string', 'Yet another string!', true);
-```
-
-### Returning Values to Variables
-Many times we have no need to work with the DOM and our returned results. Data can be returned to variables in
-a number of different ways. The `result()` and `end()` methods both work to return data. Additionally we can use
-the `data` property to return our data within an array.
-
-```javascript
-// We suspend our callback so the global callback is not used
-P.useCallback = false;
-
-// Both .result and .data return data directly
-var strLenA = P.strlen('some string').result();
-var strLenB = P.strlen('another string').end();
-var totalStrLen = strLenA + strLenB;
-console.log( totalStrLen ); // 25
-
-// Returns data in an array
-var data1 = P.crypt("Some Crypt String").data;
-console.log( data1 ); // ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
 ```
 
 ### Block Mode
