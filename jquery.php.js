@@ -52,12 +52,13 @@
 		// Special case plugin functions
 		pluginMethods = {
 			core: 'bench block chain exec multi',
-			data: 'result end'
+			data: 'result end repeat clear'
 		},
 		
+		// Stores values used asglobals
 		cache = {
 			
-			// Reference to jquery.php
+			// Reference the plugin
 			plugin: $.fn.php,
 			
 			// Returned data from the last request
@@ -70,7 +71,12 @@
 			selected: null,
 			
 			// Keep track of which operating mode
-			mode: 'default'
+			mode: 'default',
+			
+			chainBuffer: {
+				request: [],
+				data: []
+			}
 		},
 		
 		config = {
@@ -179,13 +185,32 @@
 								case 'end' :
 									this.data = cache.data[0];
 									return this.data;
+									
+								case 'repeat' :
+									$.each( cache.chainBuffer.request, function(index, value) {
+
+										// Execute request
+										methods.call.apply( this, Array.prototype.slice.call( value ));
+										
+										// Set data property before returning
+										this.data = cache.data;
+							
+										// Store our last request and data in buffer
+										cache.chainBuffer.request.push( cleanArgs );
+										cache.chainBuffer.data.push( this.data );
+									});
+									return this;
+									
+								case 'clear' :
+									cache.chainBuffer.request = [];
+									cache.chainBuffer.data = [];
+									return this;
 							}
 					
 							// Build arguments listing for next function call
 							var cleanArgs = [];
 							for ( var i = 0; i < aLen; i++ ) {
 								if ( ! jQuery.isFunction( args[i] ) ) {
-									
 									if ( jQuery.isArray( args[i] )
 									&& args[i].length === 0 ) {
 										cleanArgs.push( cache.data[0] );
@@ -203,6 +228,11 @@
 							
 							// Set data property before returning
 							this.data = cache.data;
+							
+							// Store our last request and data in buffer
+							cache.chainBuffer['request'].push( cleanArgs );
+							cache.chainBuffer['data'].push( this.data );
+
 							return this;
 							
 						}
