@@ -6,12 +6,15 @@
  * See the README file for documentation and usage information.
  *
  **/
-(function( $ ) {
+;(function( $ ) {
 	
 	var 
 		
+		// Plugin name
+		pluginName = "php",
+		
 		// Reference to the plugin
-		plugin = $.fn.php,
+		plugin = $.fn[pluginName],
 		
 		// Reference to core PHP methods
 		coreMethods = {
@@ -55,11 +58,11 @@
 			data: 'result end repeat clear'
 		},
 		
-		// Stores values used asglobals
-		cache = {
+		// Stores values used as globals
+		global = {
 			
 			// Reference the plugin
-			plugin: $.fn.php,
+			plugin: $.fn[pluginName],
 			
 			// Returned data from the last request
 			data: false,	
@@ -73,6 +76,7 @@
 			// Keep track of which operating mode
 			mode: 'default',
 			
+			// Stores each request until cleared
 			chainBuffer: {
 				request: [],
 				data: []
@@ -116,7 +120,8 @@
 		}),
 		
 		/**
-		 * Bind core and user defined methods to the plugin
+		 * Bind core and user defined methods to the plugin allowing us to provide interfaces
+		 * for various methods based on how they are called.
 		 * @return {Object} jQuery object
 		 */
 		bind : function() {			
@@ -131,7 +136,7 @@
 					curMethod = curMethodClass[n];
 			
 					// Build method attachment
-					$.fn.php[curMethod] = (function( curMethod ) {
+					$.fn[pluginName][curMethod] = (function( curMethod ) {
 						return function() {
 							var args = arguments, 
 								aLen = args.length,
@@ -140,27 +145,27 @@
 							// Reroute core plugin methods
 							switch ( fName ) {		
 								case 'bench' :
-									cache.mode = 'bench';
+									global.mode = 'bench';
 									return methods.bench.apply( this, Array.prototype.slice.call( arguments ));
 									
 								case 'block' :
-									cache.mode = 'block';
+									global.mode = 'block';
 									methods.call.apply( this, Array.prototype.slice.call( arguments ));
-									this.data = cache.data;
+									this.data = global.data;
 									return this;
 									
 								case 'chain' :
-									cache.mode = 'chain';
+									global.mode = 'chain';
 									return this;
 																		
 								case 'exec' :
-									cache.mode = 'exec';
+									global.mode = 'exec';
 									methods.call.apply( this, Array.prototype.slice.call( arguments ));
-									this.data = cache.data;
+									this.data = global.data;
 									return this;
 									
 								case 'multi' :
-									cache.mode = 'multi';
+									global.mode = 'multi';
 									for ( var i = 0; i < aLen; i++ ) {
 										if ( jQuery.isPlainObject( args[i] ) ) {
 											var phpObject = args[i];
@@ -172,56 +177,68 @@
 										var passArgs = phpObject[ func ];
 										passArgs.unshift( func );		
 										methods.call.apply( this, Array.prototype.slice.call( passArgs ) );
-										resultsArr.push( cache.data[0] );
+										resultsArr.push( global.data[0] );
 									} 
 									this.data = resultsArr;
 									return this;
 																		
 								case 'result' :
-									this.data = cache.data[0];
+									this.data = global.data[0];
 									return this.data;
 									
 								case 'end' :
-									this.data = cache.data[0];
+									this.data = global.data[0];
 									return this.data;
 									
 								case 'repeat' :
-									$.each( cache.chainBuffer.request, function(index, value) {
+									$.each( global.chainBuffer.request, function(index, value) {
 
 										// Execute request
 										methods.call.apply( this, Array.prototype.slice.call( value ));
 										
 										// Set data property before returning
-										this.data = cache.data;
+										this.data = global.data;
 							
 										// Store our last request and data in buffer
-										cache.chainBuffer.request.push( cleanArgs );
-										cache.chainBuffer.data.push( this.data );
+										global.chainBuffer.request.push( cleanArgs );
+										global.chainBuffer.data.push( this.data );
 									});
 									return this;
 									
 								case 'clear' :
-									cache.chainBuffer.request = [];
-									cache.chainBuffer.data = [];
+									global.chainBuffer.request = [];
+									global.chainBuffer.data = [];
 									return this;
 									
 								case 'context' :
-									cache.mode = 'context';
-									for ( var i = 0; i < aLen; i++ ) {
-										if ( args[i] instanceof jQuery ) {
-											cache.selected = args[i];		
+									global.mode = 'context';
+									if ( aLen === 0 ) {
+										return global.selected;
+									} else {
+										for ( var i = 0; i < aLen; i++ ) {
+											if ( args[i] instanceof jQuery ) {
+												global.selected = args[i];		
+											}
 										}
+										return this;
 									}
-									return this;
 									
 								case 'callback' :
-									cache.mode = 'callback';
-									for ( var i = 0; i < aLen; i++ ) {
-										if ( jQuery.isFunction( args[i] ) ) {
-											cache.callback = args[i];
+									global.mode = 'callback';
+									if ( ! args[0] ) {
+										this.useCallback = false;
+										return global.callback;
+									} else {
+										for ( var i = 0; i < aLen; i++ ) {
+											if ( jQuery.isFunction( args[i] ) ) {
+												this.useCallback = true;
+												global.callback = args[i];
+											} else if ( args[i] ) {
+												this.useCallback = true;
+											}
 										}
+										return this;
 									}
-									return this;
 							}
 					
 							// Build arguments listing for next function call
@@ -230,7 +247,7 @@
 								if ( ! jQuery.isFunction( args[i] ) ) {
 									if ( jQuery.isArray( args[i] )
 									&& args[i].length === 0 ) {
-										cleanArgs.push( cache.data[0] );
+										cleanArgs.push( global.data[0] );
 									} else {
 										cleanArgs.push( args[i] );
 									}
@@ -244,11 +261,11 @@
 							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
 							
 							// Set data property before returning
-							this.data = cache.data;
+							this.data = global.data;
 							
 							// Store our last request and data in buffer
-							cache.chainBuffer['request'].push( cleanArgs );
-							cache.chainBuffer['data'].push( this.data );
+							global.chainBuffer['request'].push( cleanArgs );
+							global.chainBuffer['data'].push( this.data );
 
 							return this;
 							
@@ -264,8 +281,8 @@
 		 * Parses type conversions from our JSON object sent from the server.
 		 * This method converts returned data from the server to its appropriate JavaScript type so we're not 
 		 * forcing users to work with strings. This will save them the hassle of doing their own type conversion.
-		 * @param {String} phpObj A JSON encoded string from the server.
-		 * @return {Object} jQuery object.
+		 * @param {String} phpObj A JSON encoded string from the server
+		 * @return {Array} Converted data wrapped in an array
 		 */
 		type : function( phpObj ) {
 			var obj = JSON.parse( phpObj ),
@@ -290,31 +307,29 @@
 					data = [data];
 					break;
 					
-				case ('bool' || 'null' || 'default') :
+				default :
 					data = [data];
-					break;
 			}
 			
 			return data;
 		},
-		 
+
 		/**
 		 * Handles sending PHP function requests to the server.
-		 * @func {String} Name of function being requested.
-		 * @return {Object} jQuery object.
+		 * @func {String} Name of function being requested
+		 * @return {Object} jQuery object
 		 */
 		call : function() {
 
 			// Holds our data object used in our XHR object
 			var passData = null;
 	
-			switch ( cache.mode ) {
+			switch ( global.mode ) {
 					
 				case 'exec' :
 					
 					// Reference our code to be executed
 					var code = arguments[0];
-					
 					passData = { 'method': 'exec', 'code': code };
 					break;
 					
@@ -322,7 +337,6 @@
 				
 					// Stringify our PHP object block
 					var phpObj = JSON.stringify( arguments[0] );
-				
 					passData = { 'method': 'block', 'pobj': phpObj };
 					break;
 					
@@ -363,12 +377,10 @@
 					var parsedData = methods.type( data );
 					
 					// Stores our returned results globally
-					cache.data = parsedData;
+					global.data = parsedData;
 					
-					if ( $.fn.php.useCallback === true ) {
-						
-						// Call our global callback
-						cache.callback( parsedData, cache.selected );
+					if ( $.fn[pluginName].useCallback === true ) {
+						global.callback( parsedData, global.selected );
 					}
 					
 				}
@@ -382,7 +394,7 @@
 		 * on a given test the higher its accuracy will be. By default 5 rounds are run.
 		 * @param {Function} callback A function containg code to be tested. 
 		 * @param {Int} rounds The number of rounds to test the code.
-		 * @return {String} The computed average time in milaseconds.
+		 * @return {Object} The plugin object
 		 */
 		bench : function( callback, rounds ) {
 			
@@ -423,10 +435,10 @@
 			var average = roundsSum / parseInt( roundTimes.length );
 			
 			// Store our computed results globally
-			cache.data = [average];
+			global.data = [average];
 			
 			// Store our computed results into our plugin
-			this.data = cache.data;
+			this.data = global.data;
 			
 			return this;
 		},
@@ -435,13 +447,13 @@
 	
 	/**
 	 * The interface to the jquery.php plugin.
-	 * @method {String} Name of method to be called.
-	 * @return {Object} jQuery object with data property storing returned PHP result.
+	 * @method {String} Name of method to be called
+	 * @return {Object} jQuery object
 	 */
-	$.fn.php = function( method ) {			
+	$.fn[pluginName] = function( method ) {			
 		var args = arguments,
 			aLen = arguments.length,
-			plugin = $.fn.php;
+			plugin = $.fn[pluginName];
 
 		// When no arguments return the plugin
 		if ( aLen === 0 ) {
@@ -458,12 +470,12 @@
 			} 
 		}
 		
-		// Reference the method (which determins our interface mode) that is being called (if any)
-		var mode = cache.mode = ( fName || method );
+		// Reference the interface mode
+		var mode = global.mode = ( fName || method );
 		
-		// If method is anything but a string set our mode to default
+		// If mode is anything but a string set our mode to default
 		if ( jQuery.type( mode ) !== "string" ) {
-			cache.mode = 'default';
+			global.mode = 'default';
 		}
 		
 		// Set our global callback and selector simultaneously if selector and callback provided
@@ -474,15 +486,15 @@
 			if ( args[i] instanceof jQuery || this instanceof jQuery ) {
 				
 				if ( this instanceof jQuery ) {
-					cache.selected = this;		
+					global.selected = this;		
 				} else {
-					cache.selected = args[i];
+					global.selected = args[i];
 					instanceOfJquery = true;
 				}
 				
 				// If argument length is 1 we assume only a selector is being set so we return
 				if ( aLen === 1 ) {
-					return cache.selected;
+					return global.selected;
 				}
 			}
 			
@@ -490,9 +502,8 @@
 			if ( jQuery.isFunction( args[i] ) && mode !== 'bench' ) {
 				
 				// If another function passes a callback we assume suspension of callback is over
-				$.fn.php.useCallback = true;
-				
-				cache.callback = args[i];
+				$.fn[pluginName].useCallback = true;
+				global.callback = args[i];
 				isFunction = true;
 				
 				// If argument length is 1 we assume only a callback is being passed and we return
@@ -511,7 +522,7 @@
 		switch ( mode ) {
 			
 			case 'init' :	
-				methods.init.apply( cache.selected, Array.prototype.slice.call( args, 1 ));
+				methods.init.apply( global.selected, Array.prototype.slice.call( args, 1 ));
 				return plugin;
 				
 			case 'multi' :
@@ -523,7 +534,7 @@
 					}
 				}
 				
-				// Create a data array to be returned by the user via the .data property
+				// Create a data array to be returned by the user
 				var resultsArr = [];
 				
 				// We augment our passed paramters to conform to our 'call' method
@@ -531,7 +542,7 @@
 					var passArgs = phpObject[ func ];
 					passArgs.unshift( func );		
 					methods.call.apply( plugin, Array.prototype.slice.call( passArgs ) );
-					resultsArr.push( cache.data[0] );
+					resultsArr.push( global.data[0] );
 				} 
 				
 				plugin.data = resultsArr;
@@ -546,7 +557,7 @@
 				}
 				
 				methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
-				plugin.data = cache.data;
+				plugin.data = global.data;
 				return plugin;
 
 			case 'chain' :
@@ -571,7 +582,6 @@
 				return methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
 				
 			case 'bench' :
-				
 				var cleanArgs = [];
 				for ( var i = 0; i < aLen; i++ ) {
 					if ( args[i] !== 'bench' ) {
@@ -582,8 +592,6 @@
 				return methods.bench.apply( plugin, Array.prototype.slice.call( cleanArgs ));
 					
 			default :
-				
-				// We iterate over all arguments passed and remove any callbacks
 				var cleanArgs = [];
 				for ( var arg in args ) {
 					if ( ! jQuery.isFunction( args[arg] ) ) {
@@ -593,10 +601,10 @@
 				
 				// Pass the fName as the first argument to our call method
 				if ( fName ) {
-					cleanArgs.unshift( fName );
+					cleanArgs.unshift( fName ); 
 				} 
 						
-				methods.call.apply( cache.selected, Array.prototype.slice.call( cleanArgs ));
+				methods.call.apply( global.selected, Array.prototype.slice.call( cleanArgs ));
 				return plugin;
 		}
 		
