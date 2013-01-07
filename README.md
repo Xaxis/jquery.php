@@ -1,11 +1,11 @@
 #jQuery plugin for writing and using PHP within JavaScript
 ##A versitile jQuery plugin implementation
 
-	A versitile wrapper for using PHP in JavaScript. Allows for quickly writing web applications in 
-    	multi-code situations. You can define and use custom PHP functions directly within JavaScript. 
-	By default you can easily gain access to most of PHP's core functions within JavaScript without 
-    	the overhead and implementation issues often found when using JavaScript libraries to emulate PHP 
-    	functions. See features section for more details on provided functionality.
+  A versitile wrapper for using PHP in JavaScript. Allows for quickly writing web applications in 
+  multi-code situations. You can define and use custom PHP functions directly within JavaScript. 
+  By default you can easily gain access to most of PHP's core functions within JavaScript without 
+  the overhead and implementation issues often found when using JavaScript libraries to emulate PHP 
+  functions. See features section for more details on provided functionality.
 
   Fork me @ https://github.com/Xaxis/jqueryphp
 
