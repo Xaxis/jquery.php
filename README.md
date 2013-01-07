@@ -114,10 +114,21 @@ Before we get to much further into demonstrating how to use jquery.php, you shou
 with the various core methods of the plugin.
 
 Mode methods: 
-* `block` 
-* `chain` 
-* `exec` 
+* `block`
+	* Implements the blocking mode interface
+    	* Allows for passing JSON objects of PHP to the server
+* `chain`
+	* Implements the method chaining mode
+    	* Is the default method of operation
+    	* Used to chain PHP functions together in logical units
+    	* Calling `chain` directly is not required behavior
+* `exec`
+	* Implements the execution mode interface
+    	* Used to exicute arbitrary strings of PHP code
 * `multi`
+	* Implements the multiple mode interface
+    	* Used as an easy shorthand to send multiple function requests
+    	* Unlike `block` does not send all function calls at one time
 
 Setter methods:
 * `callback` 
