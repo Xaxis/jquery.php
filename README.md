@@ -115,20 +115,20 @@ with the various core methods of the plugin.
 
 Mode methods: 
 * `block`
-** Implements the blocking mode interface
-** Allows for passing JSON objects of PHP to the server
+* 	Implements the blocking mode interface
+* 	Allows for passing JSON objects of PHP to the server
 * `chain`
-** Implements the method chaining mode
-** Is the default method of operation
-** Used to chain PHP functions together in logical units
-** Calling `chain` directly is not required behavior
+* 	Implements the method chaining mode
+* 	Is the default method of operation
+* 	Used to chain PHP functions together in logical units
+* 	Calling `chain` directly is not required behavior
 * `exec`
-** Implements the execution mode interface
-** Used to exicute arbitrary strings of PHP code
+* 	Implements the execution mode interface
+* 	Used to exicute arbitrary strings of PHP code
 * `multi`
-** Implements the multiple mode interface
-** Used as an easy shorthand to send multiple function requests
-** Unlike `block` does not send all function calls at one time
+* 	Implements the multiple mode interface
+* 	Used as an easy shorthand to send multiple function requests
+* 	Unlike `block` does not send all function calls at one time
 
 Setter methods:
 * `callback` 
