@@ -118,17 +118,23 @@ $("#results1").php('highlight_string', 'Yet another string!', true);
 ```
 
 ### Usage scenario (Returning Values)
-Many times we have no need to work with the DOM and our returned results. When making single function calls
-it's as easy as assigning our calls to a variable.
+Many times we have no need to work with the DOM and our returned results. Data can be returned to variables in
+a number of different ways. The `result()` and `end()` method both work to return data. Additionally we can use
+the `data` property to return our data within an array.
 
 ```javascript
 // We suspend our callback so the global callback is not used
 P.useCallback = false;
 
-var strLenA = P.strlen('some string');
-var strLenB = P.strlen('another string');
+// Both .result and .data return data directly
+var strLenA = P.strlen('some string').result();
+var strLenB = P.strlen('another string').end();
 var totalStrLen = strLenA + strLenB;
-console.log( totalStrLen );
+console.log( totalStrLen );	// 25
+
+// Returns data in an array
+var data1 = P.crypt("Some Crypt String").data;
+console.log( data1 );		// ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
 ```
 
 ### Usage scenario (Block Mode)
