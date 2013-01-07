@@ -113,12 +113,12 @@ P.context($("#results1")).callback(function(data, self) {
 In many situations we will not be working with the DOM at all. We'll simply want to return results from PHP
 and work with them directly in our JavaScript. There are a few different ways in which jquery.php returns
 data.
-1. The `end` method returns data in raw form. That is it returns data outside of the array that jquery.php
-stores it in.
-2. The `data` property returns data within an array that jquery.php stores it in.
-3. Both ways of retrieving data share one thing in common: you call them at the end of a request sequence.
-4. Since jquery.php was designed to work with jQuery and the DOM it is usually prudent to set the `useCallback`
-property to `false` before sequences of code that work with returned values directly.
+1. [The `end` method returns data in raw form. That is it returns data outside of the array that jquery.php
+stores it in.]
+2. [The `data` property returns data within an array that jquery.php stores it in.]
+3. [Both ways of retrieving data share one thing in common: you call them at the end of a request sequence.]
+4. [Since jquery.php was designed to work with jQuery and the DOM it is usually prudent to set the `useCallback`
+property to `false` before sequences of code that work with returned values directly.]
 
 ```javascript
 // We suspend our callback so the global callback is not used
