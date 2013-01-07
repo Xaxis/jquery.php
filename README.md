@@ -109,23 +109,23 @@ P.context($("#results1")).callback(function(data, self) {
 });
 ```
 
-### Plugin Methods
+### Core Methods
 Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
 with the various core methods of the plugin.
 
 Mode methods: 
-* `block`
+* `php.block( blockObject )`
 	* Implements the blocking mode interface
 	* Allows for passing JSON objects of PHP to the server
-* `chain`
+* `php.chain( methodCount )`
 	* Implements the method chaining mode
 	* Is the default method of operation
 	* Used to chain PHP functions together in logical units
 	* Calling `chain` directly is not required behavior
-* `exec`
+* `php.exec( codeString )`
 	* Implements the execution mode interface
 	* Used to exicute arbitrary strings of PHP code
-* `multi`
+* `php.multi( multiObject )`
 	* Implements the multiple mode interface
 	* Used as an easy shorthand to send multiple function requests
 	* Unlike `block` does not send all function calls at one time
