@@ -13,6 +13,9 @@
 		// Plugin name
 		pluginName = "php",
 		
+		// Plugin version
+		pluginVersion = "2.0",
+		
 		// Reference to the plugin
 		plugin = $.fn[pluginName],
 		
@@ -55,7 +58,7 @@
 		// Special case plugin functions
 		pluginMethods = {
 			core: 'bench block chain exec multi callback context',
-			data: 'result end repeat clear'
+			data: 'result end data repeat clear'
 		},
 		
 		// Stores values used as globals
@@ -151,7 +154,7 @@
 								case 'block' :
 									global.mode = 'block';
 									methods.call.apply( this, Array.prototype.slice.call( arguments ));
-									this.data = global.data;
+									this.returnData = global.data;
 									return this;
 									
 								case 'chain' :
@@ -161,7 +164,7 @@
 								case 'exec' :
 									global.mode = 'exec';
 									methods.call.apply( this, Array.prototype.slice.call( arguments ));
-									this.data = global.data;
+									this.returnData = global.data;
 									return this;
 									
 								case 'multi' :
@@ -179,16 +182,20 @@
 										methods.call.apply( this, Array.prototype.slice.call( passArgs ) );
 										resultsArr.push( global.data[0] );
 									} 
-									this.data = resultsArr;
+									this.returnData = resultsArr;
 									return this;
 																		
 								case 'result' :
-									this.data = global.data[0];
-									return this.data;
+									this.returnData = global.data[0];
+									return this.returnData;
+								
+								case 'data' :
+									this.returnData = global.data;
+									return this.returnData;
 									
 								case 'end' :
-									this.data = global.data[0];
-									return this.data;
+									this.returnData = global.data[0];
+									return this.returnData;
 									
 								case 'repeat' :
 									$.each( global.chainBuffer.request, function(index, value) {
@@ -197,11 +204,11 @@
 										methods.call.apply( this, Array.prototype.slice.call( value ));
 										
 										// Set data property before returning
-										this.data = global.data;
+										this.returnData = global.data;
 							
 										// Store our last request and data in buffer
 										global.chainBuffer.request.push( cleanArgs );
-										global.chainBuffer.data.push( this.data );
+										global.chainBuffer.data.push( this.returnData );
 									});
 									return this;
 									
@@ -261,11 +268,11 @@
 							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
 							
 							// Set data property before returning
-							this.data = global.data;
+							this.returnData = global.data;
 							
 							// Store our last request and data in buffer
 							global.chainBuffer['request'].push( cleanArgs );
-							global.chainBuffer['data'].push( this.data );
+							global.chainBuffer['data'].push( this.returnData );
 
 							return this;
 							
@@ -278,9 +285,8 @@
 		},
 
 		/**
-		 * Parses type conversions from our JSON object sent from the server.
-		 * This method converts returned data from the server to its appropriate JavaScript type so we're not 
-		 * forcing users to work with strings. This will save them the hassle of doing their own type conversion.
+		 * Parses type conversions from our JSON object sent from the server. This method converts 
+		 * returned data passed to it to its appropriate type.
 		 * @param {String} phpObj A JSON encoded string from the server
 		 * @return {Array} Converted data wrapped in an array
 		 */
@@ -332,7 +338,7 @@
 					var code = arguments[0];
 					passData = { 'method': 'exec', 'code': code };
 					break;
-					
+				
 				case 'block' :
 				
 					// Stringify our PHP object block
@@ -438,7 +444,7 @@
 			global.data = [average];
 			
 			// Store our computed results into our plugin
-			this.data = global.data;
+			this.returnData = global.data;
 			
 			return this;
 		},
@@ -545,7 +551,7 @@
 					resultsArr.push( global.data[0] );
 				} 
 				
-				plugin.data = resultsArr;
+				plugin.returnData = resultsArr;
 				return plugin;
 								
 			case 'block' :	
@@ -557,7 +563,7 @@
 				}
 				
 				methods.call.apply( plugin, Array.prototype.slice.call( cleanArgs ));
-				plugin.data = global.data;
+				plugin.returnData = global.data;
 				return plugin;
 
 			case 'chain' :
