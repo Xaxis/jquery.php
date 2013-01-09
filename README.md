@@ -55,7 +55,7 @@ P('init',
 ```
 
 ### Defining a Global Callback
-Define a global callback function so you don't have to pass one to a function requests every call if 
+Define a global callback function so you don't have to pass one to a function request every call if 
 we're working with the DOM.
 
 ```javascript
@@ -113,10 +113,6 @@ P.context($("#results1")).callback(function(data, self) {
 Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
 with the various core methods of the plugin.
 
-### Plugin Methods
-Before we get to much further into demonstrating how to use jquery.php, you should familiarize yourself
-with the various core methods of the plugin.
-
 Mode methods: 
 * `php.block( blockObject )`
 	* Implements the blocking mode interface
@@ -143,7 +139,7 @@ Getter/Setter methods:
     * Passing a function sets the global callback and re-activates the `useCallback` property
     * Passing `true` or any "truthy" value sets the `useCallback` property to true
 	* Passing `false` or any "falsy" value sets the `useCallback` property to false
-    * Passing no arguments sets the `useCallback` property to false
+    * Passing no arguments sets the `useCallback` property to false and returns the callback
 * `php.context( context[, *] )`
 	* Sets the global selector context
     * Passing a jQuery selected element sets the global context
@@ -154,6 +150,8 @@ Closing methods:
 	* Returns the value of the last requested function call
 * `php.result()`
 	* Returns the value of the last requested function call
+* `php.data()`
+	* Returns the value of the last requested function call within an array
 
 Utility methods:
 * `php.bench( selfInvokingCallback )`
@@ -163,20 +161,23 @@ Utility methods:
     * Like other jquery.php methods the value is not directly returned until you call `end` or `result` on
       the method.
 * `php.clear()`
-	* Clears the chain buffer which records all requests made as well as those requests returned values
+	* Clears the chain buffer that holds all requests made to a point
+    * If called directly before `repeat`, `repeat` will have no effect  
 * `php.repeat()`
-	* Repeats all function requests made to the server
+	* Repeats all function requests made to a point to the server 
 
 ### Returning Values to Variables
 In many situations we will not be working with the DOM at all. We'll simply want to return results from PHP
 and work with them directly in our JavaScript. There are a few different ways in which jquery.php returns
 data.
+
 * The `end` method returns data in raw form. That is it returns data outside of the array that jquery.php
-stores it in.
-* The `data` property returns data within an array that jquery.php stores it in.
+stores it in
+* The `result` method returns data within the array that jquery.php stores it in
 * Both ways of retrieving data share one thing in common: you call them at the end of a request sequence.
-* Since jquery.php was designed to work with jQuery and the DOM it is usually prudent to set the `useCallback`
-property to `false` before sequences of code that work with returned values directly.
+* Since jquery.php was designed to work with jQuery and the DOM it is usually prudent to call `callback(false)`
+to avoid using any set callbacks. Either way values will be returned back to your code. However without setting the
+callback to false the DOM will still be interacted with if you have previously assigned any callbacks.
 
 ```javascript
 // We suspend our callback so the global callback is not used
@@ -189,7 +190,7 @@ var totalStrLen = strLenA + strLenB;
 console.log( totalStrLen ); // 25
 
 // .data Returns data in an array
-var data1 = P.crypt("Some Crypt String").data;
+var data1 = P.crypt("Some Crypt String").data();
 console.log( data1 ); // ["$1$Tk1b01rk$shTKSqDslatUSRV3WdlnI/"]
 ```
 
@@ -304,7 +305,7 @@ P.useCallback = false;
 
 // We want to return our computed results to a variable and don't want to effect the DOM
 var result = P('block', codeBlock).result();
-var data = P('block', codeBlock).data;
+var data = P('block', codeBlock).data();
 console.log( result, data );
 
 // Additionally it is possible to set a new context and callback while making any type of request
