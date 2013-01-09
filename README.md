@@ -184,7 +184,7 @@ callback to false the DOM will still be interacted with if you have previously a
 // We suspend our callback so the global callback is not used
 P.useCallback = false;
 
-// Both .end() and .data return data to variables
+// Both .end(), .result() and .data() return data to variables
 var strLenA = P.strlen('some string').end();
 var strLenB = P.strlen('another string').end();
 var totalStrLen = strLenA + strLenB;
@@ -234,10 +234,10 @@ var highlightedString = P.highlight_string('some string').end();
 ### Chain Mode
 This is the default mode of operation of the plugin and calling the `chain` method directly is not required. Chain
 mode allows for calling sequences of PHP functions in a chain (functionality that is not provided for PHP functions
-in PHP itself.
+in PHP itself).
 
-* The first method called in a chain is passed the given functions default parameters
-* Methods after the first down the chain are given the returned data from the last function call via empty array that is used as a flag that tells jquery.php which parameter to pass that data to
+* The first method called in a chain is passed that function's parameters as usual
+* Methods after the first down the chain are given the returned data from the last function call via an empty array that is used as a flag that tells jquery.php which parameter to pass that data to
 * The point of PHP function chaining is to create a versitile shorthand for writing sequential function calls that depend on the returned results from functions called previously as values passed to their parameters
 
 It will be far easier to simply demonstrate some usage scenarios:
@@ -248,8 +248,8 @@ var data1 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",",
 console.log( data1 ); // ["C", "A,S,E"] 
 
 // Call strtoupper followed by strstr followed by explode followed by implode
-var data2 = P.chain(4).strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 6).implode(",",[]).end();
-console.log( data1 ); // // "C,A,S,E"  
+var data2 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 6).implode(",",[]).end();
+console.log( data2 ); // // "C,A,S,E"  
 ```
 
 ### Block Mode
@@ -258,9 +258,15 @@ containing PHP pseudo-code to be executed by PHP. Unlike other modes, code and f
 executed and returned one at a time. Instead the entire "block" of JSON pseudo-code is executed on the
 server and then returned.
 
+* Each sub-object block must be referenced by a literal such as `$str`
+* You assign any type of JavaScript data to a given object literal
+* When making function requests an object literal must reference an object which first contains an object literal with the same name as the function you want to call.
+* The object literal with the name of the function you would like to call must reference an array containing any parameters to be passed to that function.
+* You can pass previously defined object literals as parameters to other functions by placing an identical string with the same name as the object literal you are targeting in the parameter location where you would like to pass it.
+
 ```javascript 
 // Perhaps the easiest manner to use block mode is as follows   
-P.block({
+var codeBlock = P.block({
     $str: "Let's use PHP's file_get_contents()!",
     $opts: 
     [
@@ -284,59 +290,7 @@ P.block({
     {
         htmlentities: ['$contents']
     }
-});
-
-// Let's switch the selector context and assign a different callback
-P($("#results2"), function (data, self) {
-    $(self).append("<div style='color: green'>" + data + "</div>");
-});
-
-// We create an identical object as above and store it in the variable `codeBlock`
-var codeBlock = 
-{
-    $str: "Let's use PHP's file_get_contents()!",
-    $opts: 
-    [
-        {
-            http: {
-                method: "GET",
-                header: "Accept-language: en\r\n" +
-                        "Cookie: foo=bar\r\n"
-            }
-        }
-    ],
-    $context: 
-    {
-        stream_context_create: ['$opts']
-    },
-    $contents: 
-    {
-        file_get_contents: ['http://www.williamneeley.com/', false, '$context']
-    },
-    $html: 
-    {
-        htmlentities: ['$contents']
-    }
-};
-
-// Returns the results of our codeBlock request to the selected context
-P('block', codeBlock);	
-
-// Now we disable our usage of a callback all together
-P.callback(false);
-
-// We want to return our computed results to a variable and don't want to effect the DOM
-var result = P('block', codeBlock).result();
-var data = P('block', codeBlock).data();
-console.log( result, data );
-
-// Additionally it is possible to set a new context and callback while making any type of request
-P('block', $("#results3"), function(data, self) {
-    $(self).append("<div style='border:5px dotted orange; white-space:pre-wrap;'>"+data+"</div>");
-}, codeBlock);
-
-// Keep in mind passing a callback to any method will reactivate the usage of callbacks
-P.calllback(false);
+}).end();
 ```
 
 ### Multi Mode
@@ -356,7 +310,7 @@ P(function multi(data, self) {
 });
 
 // If we don't want function calls to use the global callback we can suspend the callback
-P.useCallback = false;
+P.callback(false);
 
 // Now we can return an array of values from our multi mode call
 var dataSet = P('multi',
@@ -365,10 +319,10 @@ var dataSet = P('multi',
     cosh : [23],
     sqrt : [43]
 }).data;
-console.log(dataSet);
+console.log( dataSet );
 
 // The global callback is unsuspended on the next callback passed to our plugin but we can also do so manually
-P.useCallback = true;
+P.callback( true );
 
 // Set a new selector context while using multi mode
 $("#results4").php('multi',
