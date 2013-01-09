@@ -64,9 +64,6 @@
 		// Stores values used as globals
 		global = {
 			
-			// Reference the plugin
-			plugin: $.fn[pluginName],
-			
 			// Returned data from the last request
 			data: false,	
 			
@@ -234,7 +231,7 @@
 									global.mode = 'callback';
 									if ( ! args[0] ) {
 										this.useCallback = false;
-										return global.callback;
+										return this;
 									} else {
 										for ( var i = 0; i < aLen; i++ ) {
 											if ( jQuery.isFunction( args[i] ) ) {
