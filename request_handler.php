@@ -93,11 +93,23 @@ if ( $method_request ) {
 			
 			// Convert our parameters string and convert it into an array
 			$args_arr = json_decode($func_args, false);
+			$args_clean_arr = array();
+			
+			// To play it safe we parse our arguments arrays into JSON. This allows users to pass
+			// JavaScript arrays or objects that we can use in PHP.
+			foreach ( $args_arr as $arg ) {
+				
+				if ( json_decode( $arg ) !== NULL ) {
+					array_push( $args_clean_arr, json_decode( $arg ) );
+				} else {
+					array_push( $args_clean_arr, $arg );
+				}
+			}
 			 
 			// Call the requested function if permitted
 			if ( $function !== false ) {
 				$call = $function;
-				echo parse_type( call_user_func_array($call, $args_arr) );
+				echo parse_type( call_user_func_array($call, $args_clean_arr) );
 			}
 			break;
 		
