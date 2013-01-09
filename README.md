@@ -114,9 +114,6 @@ Before we get to much further into demonstrating how to use jquery.php, you shou
 with the various core methods of the plugin.
 
 Mode methods: 
-* `php.block( blockObject )`
-	* Implements the blocking mode interface
-	* Allows for passing JSON objects of PHP to the server
     
 * `php.chain( methodCount )`
 	* Implements the method chaining mode
@@ -124,14 +121,18 @@ Mode methods:
 	* Used to chain PHP functions together in logical units
 	* Calling `chain` directly is not required behavior
     
-* `php.exec( codeString )`
-	* Implements the execution mode interface
-	* Used to exicute arbitrary strings of PHP code
+* `php.block( blockObject )`
+	* Implements the blocking mode interface
+	* Allows for passing JSON objects of PHP to the server
     
 * `php.multi( multiObject )`
 	* Implements the multiple mode interface
 	* Used as an easy shorthand to send multiple function requests
 	* Unlike `block` does not send all function calls at one time
+    
+* `php.exec( codeString )`
+	* Implements the execution mode interface
+	* Used to exicute arbitrary strings of PHP code
 
 Getter/Setter methods:
 * `php.callback( callback[, *] )`
@@ -224,10 +225,31 @@ $("#results1").php('highlight_string', function(data, self) {
 $("#results1").php('highlight_string', 'Yet another string!', true);
 
 // Turning off the usage of callbacks
-P.useCallback = false;
+P.callback(false);
 
 // Returning a functions return value to a JavaScript variable
 var highlightedString = P.highlight_string('some string').end();
+```
+
+### Chain Mode
+This is the default mode of operation of the plugin and calling the `chain` method directly is not required. Chain
+mode allows for calling sequences of PHP functions in a chain (functionality that is not provided for PHP functions
+in PHP itself.
+
+* The first method called in a chain is passed the given functions default parameters
+* Methods after the first down the chain are given the returned data from the last function call via empty array that is used as a flag that tells jquery.php which parameter to pass that data to
+* The point of PHP function chaining is to create a versitile shorthand for writing sequential function calls that depend on the returned results from functions called previously as values passed to their parameters
+
+It will be far easier to simply demonstrate some usage scenarios:
+
+```javascript
+// Call strtoupper followed by strstre followed by explode
+var data1 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 2).end();
+console.log( data1 ); // ["C", "A,S,E"] 
+
+// Call strtoupper followed by strstr followed by explode followed by implode
+var data2 = P.chain(4).strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 6).implode(",",[]).end();
+console.log( data1 ); // // "C,A,S,E"  
 ```
 
 ### Block Mode
@@ -301,7 +323,7 @@ var codeBlock =
 P('block', codeBlock);	
 
 // Now we disable our usage of a callback all together
-P.useCallback = false;
+P.callback(false);
 
 // We want to return our computed results to a variable and don't want to effect the DOM
 var result = P('block', codeBlock).result();
@@ -313,8 +335,8 @@ P('block', $("#results3"), function(data, self) {
     $(self).append("<div style='border:5px dotted orange; white-space:pre-wrap;'>"+data+"</div>");
 }, codeBlock);
 
-// Turning the `useCallback` property is not required. Passing a callback in any request reactivates it
-P.useCallback = true;
+// Keep in mind passing a callback to any method will reactivate the usage of callbacks
+P.calllback(false);
 ```
 
 ### Multi Mode
@@ -372,38 +394,6 @@ P(function exec(data, self) {
 // In order to return data to a variable we must call the result() method 
 var execData = P('exec', code).result();
 console.log( execData );
-```
-
-### Chain Mode
-The below is an example of calling PHP functions using the chain mode pattern. We pass our parameters to be
-acted on to our plugin method directly. No parameters should be sent to individual functions in the chain.
-All functions in the chain must be able to work on the returned results of the function before itself in
-the chain.
-
-```javascript
-// The simplest way to use chain mode
-P('chain', 8, 3).pow().pi();
-
-// One way to interface with our chain mode
-P(function chain(data, self) {
-    $(self).append("<div style='border:2px dashed blue'>" + data + "</div>");
-}, -138)
-    .abs()
-    .tan();
-
-// Interfacing with our chain mode using the 'chain' keyword
-P('chain', function(data, self) {
-    $(self).append("<div style='border:2px dashed yellow'>" + data + "</div>");
-}, 2, 8)
-    .pow()
-    .pi();
-
-// We suspend our callback so the global callback is not used
-P.useCallback = false;
-
-// Returning our results from a chain call directly to a variable (note the .data property)
-var result = P('chain', 8, 3).pow().tan().abs().data;
-console.log( result );
 ```
 
 ### Performance & Bench Testing
