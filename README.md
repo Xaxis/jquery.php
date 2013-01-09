@@ -249,7 +249,7 @@ console.log( data1 ); // ["C", "A,S,E"]
 
 // Call strtoupper followed by strstr followed by explode followed by implode
 var data2 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 6).implode(",",[]).end();
-console.log( data2 ); // // "C,A,S,E"  
+console.log( data2 ); // "C,A,S,E"  
 ```
 
 ### Block Mode
@@ -295,40 +295,35 @@ var codeBlock = P.block({
 
 ### Multi Mode
 Multi mode allows you to call consecutive PHP functions as an object by passing the function name as
-the property. Each property references an array of parameters to be passed to that function. When we
-return the results of a multi call to a variable an array is returned containing all the returned values.
+the property. This mode is different that chaining mode in that functions are called completely independently 
+from one another. Multi mode simply provides a shorthand way of calling multiple PHP functions. Results are 
+returned in an array in the order in which they were called.
 
 ```javascript
-// Using multi mode and setting a new global callback
-P(function multi(data, self) {
-    $(self).append("<div>" + data + "</div>");
-},
-{
-    abs : [-884],
-    cosh : [23],
-    sqrt : [43]
-});
-
-// If we don't want function calls to use the global callback we can suspend the callback
 P.callback(false);
 
-// Now we can return an array of values from our multi mode call
-var dataSet = P('multi',
-{
+// Returning the waw plugin data with .data()
+var data1 = P.multi({
     abs : [-884],
     cosh : [23],
     sqrt : [43]
-}).data;
-console.log( dataSet );
+}).data();
+console.log( data1 ); 	// [[884, 4872401723.1245, 6.557438524302]]
 
-// The global callback is unsuspended on the next callback passed to our plugin but we can also do so manually
-P.callback( true );
+// Returning our array of results with .end()
+var data2 = P.multi({
+    is_array : [['this', 'is', 'an', 'array']],
+	json_encode : [{'object_literal': 'some val'}],
+	gettype : [1.1]
+}).end();
+console.log( data2 ); 	// [true, "{"object_literal":"some val"}", "double"] 
 
-// Set a new selector context while using multi mode
-$("#results4").php('multi',
-{
-    pi : [700]
-});
+// Returning our array of results with .result()
+var data3 = P.multi({
+    abs : [-884],
+    cosh : [23],
+    sqrt : [43]
+}).result(); 			// [884, 4872401723.1245, 6.557438524302]
 ```
 
 ### Exec Mode
