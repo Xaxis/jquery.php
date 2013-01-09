@@ -179,7 +179,8 @@
 										methods.call.apply( this, Array.prototype.slice.call( passArgs ) );
 										resultsArr.push( global.data[0] );
 									} 
-									this.returnData = resultsArr;
+									global.data = [resultsArr];
+									this.returnData = global.data;
 									return this;
 																		
 								case 'result' :
@@ -229,7 +230,11 @@
 									
 								case 'callback' :
 									global.mode = 'callback';
-									if ( ! args[0] ) {
+									if ( aLen === 0 ) {
+										this.useCallback = false;
+										return global.callback;
+									} 
+									else if ( ! args[0] ) {
 										this.useCallback = false;
 										return this;
 									} else {
@@ -348,7 +353,14 @@
 					// Copy array like object into an array
 					var args = [];
 					for ( var i = 0; i < arguments.length; i++ ) {
-						args.push( arguments[i] );
+						
+						// Convert arrays to JSON encoded strings
+						if ( jQuery.type( arguments[i] ) === "array" || jQuery.isPlainObject( arguments[i] ) ) {
+							var jsonArg = JSON.stringify( arguments[i] );
+							args.push( jsonArg );
+						} else {
+							args.push( arguments[i] );
+						}
 					}
 					
 					// Get the name of the function being requested
@@ -375,7 +387,7 @@
 				data: passData,
 				dataType: "text",
 				success: function( data ) {
-					
+					console.log(data);
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
 					
@@ -537,10 +549,8 @@
 					}
 				}
 				
-				// Create a data array to be returned by the user
-				var resultsArr = [];
-				
 				// We augment our passed paramters to conform to our 'call' method
+				var resultsArr = [];
 				for ( func in phpObject ) {	
 					var passArgs = phpObject[ func ];
 					passArgs.unshift( func );		
@@ -548,7 +558,8 @@
 					resultsArr.push( global.data[0] );
 				} 
 				
-				plugin.returnData = resultsArr;
+				global.data = [resultsArr];
+				plugin.returnData = global.data;
 				return plugin;
 								
 			case 'block' :	
