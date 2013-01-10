@@ -57,7 +57,7 @@
 		
 		// Special case plugin functions
 		pluginMethods = {
-			core: 'bench block chain exec multi callback context',
+			core: 'bench block chain exec multi callback context $',
 			data: 'result end data repeat clear'
 		},
 		
@@ -285,16 +285,20 @@
 								// Push the last request to be made onto the buffer and reset the index
 								global.chainPreBuffer['request'].push( cleanArgs );
 								global.chainIndex -= 1;
-
+								
+								// Copy the request chain buffer and work of it for no conflicts
+								var bufferCopy = global.chainPreBuffer;
+								
 								// Build a JSON block representing the chained request to be made
+								// !! - This is what we'll pass to the server.
 								var jsonBlock = {};
 								
 								// Store a copy of each request to get access to references
 								var lastLiteralName = "";
-								for ( var i = 0; i < global.chainPreBuffer.length; i++ ) {				
+								for ( var i = 0; i < bufferCopy.length; i++ ) {				
 									
 									// The name to give our sub-object
-									var objLiteral = global.chainPreBuffer.request[i][0];
+									var objLiteral = bufferCopy.request[i][0];
 									
 									// Reference to the last object literal name if there was one
 									var lastObjLiteral = "";
@@ -302,30 +306,53 @@
 										lastObjLiteral = lastLiteralName;
 									}
 									
+									// Update last literal name here after it has been referenced
 									lastLiteralName = objLiteral;
 									
 									// Remove the function request name from the array (it becomes
 									// the object literal that represents the function being requested
 									// and references its array of parameters). The result is building
 									// a blocking mode compatible JSON object of pseudo-code.
-									global.chainPreBuffer.request[i].shift();
+									bufferCopy.request[i].shift();
 									
 									// Now we get references to pointers and construct new param array for
 									// a given function request.
-									var oldParams = global.chainPreBuffer.request[i];
+									var oldParams = bufferCopy.request[i];
 									var newParams = [];
 									for ( param in oldParams ) {
+										
+										// An empty array references the last return result
 										if ( typeof oldParams[param] === "undefined" ) {
 											var reference = "$" + lastObjLiteral.toString();
 											newParams.push( reference );
+											
+										// A string that matches a previous methods parameter
+										} else if  ( oldParams[param] === lastObjLiteral.toString() ) {
+											var reference = "$" + lastObjLiteral.toString();
+											newParams.push( reference );
+										
+										// A string if matches ANY previous object key
+										} else if ( "$" + oldParams[param].toString() in jsonBlock ) {
+											var reference = "$" + oldParams[param].toString();
+											newParams.push( reference );
+											
+										// Just put the old array element on the new array
 										} else {
 											newParams.push( oldParams[param] );
 										}
 									}
 									
-									// Add a literal referenced object with its parameters
-									jsonBlock[ "$" + objLiteral ] = {};
-									jsonBlock[ "$" + objLiteral ][ objLiteral ] = newParams;
+									// Add a variable block
+									if ( objLiteral === "$" ) {
+										jsonBlock[ "$" + newParams[0] ] = newParams[1];
+									
+									// Add a object block representative of a PHP function
+									} else {
+									
+										// Add a literal referenced object with its parameters 
+										jsonBlock[ "$" + objLiteral ] = {};
+										jsonBlock[ "$" + objLiteral ][ objLiteral ] = newParams;
+									}
 								}
 								
 								// Execute delayed request chain methods
