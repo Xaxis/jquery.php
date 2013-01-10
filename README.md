@@ -244,6 +244,8 @@ Some important things to keep in mind:
 	* You must pass an integer to the `chain` method that represents how many methods in the chain follow. This number must be accurate. Passing 3 when there are 4 methods will result in failure
     * When calling `chain` directly all method requests are sent to the server at once vs. one at a time
 	* Data is returned without the need to call any of our data methods at the end of a sequence. This is the only situation or mode of operation where you are not required to call a data method on a sequence when returning data to JavaScript
+    * Additionally you can reference the returned data from a previous method call by using the name of the last method as a string and placing that string in the parameter location where you would like to have the data passed
+    * This is the only mode that does not effect the repeat buffer
 
 It will be far easier to simply demonstrate some usage scenarios:
 
@@ -259,6 +261,14 @@ console.log( data2 ); 	// "C,A,S,E"
 // Using chain mode by calling the chain method. Notice no data method is called at the end of the sequence.
 var data3 = P.chain(3).strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 2);
 console.log(data3);		// ["C", "A,S,E"] 
+
+// Using chain mode by calling the chain method. Referencing returned results by method name.
+var data4 = 
+	P.chain(3)
+		.strtoupper("u,p,p,e,r,c,a,s,e")
+		.strstr("strtoupper", "C,A,S,E")
+		.explode(",", "strstr", 2);
+console.log(data4);
 ```
 
 ### Block Mode
