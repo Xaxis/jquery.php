@@ -182,7 +182,7 @@ callback to false the DOM will still be interacted with if you have previously a
 
 ```javascript
 // We suspend our callback so the global callback is not used
-P.useCallback = false;
+P.callback(false);
 
 // Both .end(), .result() and .data() return data to variables
 var strLenA = P.strlen('some string').end();
@@ -234,22 +234,31 @@ var highlightedString = P.highlight_string('some string').end();
 ### Chain Mode
 This is the default mode of operation of the plugin and calling the `chain` method directly is not required. Chain
 mode allows for calling sequences of PHP functions in a chain (functionality that is not provided for PHP functions
-in PHP itself).
+in the PHP language construct itself).
 
-* The first method called in a chain is passed that function's parameters as usual
-* Methods after the first down the chain are given the returned data from the last function call via an empty array that is used as a flag that tells jquery.php which parameter to pass that data to
-* The point of PHP function chaining is to create a versitile shorthand for writing sequential function calls that depend on the returned results from functions called previously as values passed to their parameters
+Some important things to keep in mind:
+* The first method called in a chain is passed that PHP function's required parameters with no alterations
+* Methods that follow the first can be given the returned data from the last function call via an empty array which acts as a reference telling the plugin where within the parameters to pass the returned data from the last request to
+* The point of PHP function chaining is to create a versitile shorthand for writing sequential function calls that depend on the returned results from functions called previously as values passed to the current called method's parameters
+* While calling `chain' directly is not required, doing so leverages some powerful results that reduce latency to and from the server by minimizing the requests sent. Some things to remember when calling the `chain` method directly:
+	* You must pass an integer to the `chain` method that represents how many methods in the chain follow. This number must be accurate. Passing 3 when there are 4 methods will result in failure
+    * When calling `chain` directly all method requests are sent to the server at once vs. one at a time
+	* Data is returned without the need to call any of our data methods at the end of a sequence. This is the only situation or mode of operation where you are not required to call a data method on a sequence when returning data to JavaScript
 
 It will be far easier to simply demonstrate some usage scenarios:
 
 ```javascript
-// Call strtoupper followed by strstre followed by explode
+// Using chain mode without calling the chain method. Notice the empty array references.
 var data1 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 2).end();
-console.log( data1 ); // ["C", "A,S,E"] 
+console.log( data1 ); 	// ["C", "A,S,E"] 
 
 // Call strtoupper followed by strstr followed by explode followed by implode
 var data2 = P.strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 6).implode(",",[]).end();
-console.log( data2 ); // "C,A,S,E"  
+console.log( data2 ); 	// "C,A,S,E"
+
+// Using chain mode by calling the chain method. Notice no data method is called at the end of the sequence.
+var data3 = P.chain(3).strtoupper("u,p,p,e,r,c,a,s,e").strstr([], "C,A,S,E").explode(",", [], 2);
+console.log(data3);		// ["C", "A,S,E"] 
 ```
 
 ### Block Mode
