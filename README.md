@@ -240,7 +240,7 @@ Some important things to keep in mind:
 * The first method called in a chain is passed that PHP function's required parameters with no alterations
 * Methods that follow the first can be given the returned data from the last function call via an empty array which acts as a reference telling the plugin where within the parameters to pass the returned data from the last request to
 * The point of PHP function chaining is to create a versitile shorthand for writing sequential function calls that depend on the returned results from functions called previously as values passed to the current called method's parameters
-* While calling `chain' directly is not required, doing so leverages some powerful results that reduce latency to and from the server by minimizing the requests sent. Some things to remember when calling the `chain` method directly:
+* While calling `chain` directly is not required, doing so leverages some powerful results that reduce latency to and from the server by minimizing the requests sent. Some things to remember when calling the `chain` method directly:
 	* You must pass an integer to the `chain` method that represents how many methods in the chain follow. This number must be accurate. Passing 3 when there are 4 methods will result in failure
     * When calling `chain` directly all method requests are sent to the server at once vs. one at a time
 	* Data is returned without the need to call any of our data methods at the end of a sequence. This is the only situation or mode of operation where you are not required to call a data method on a sequence when returning data to JavaScript
