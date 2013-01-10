@@ -80,7 +80,17 @@
 			chainBuffer: {
 				request: [],
 				data: []
-			}
+			},
+			
+			// Stores requests to be made
+			chainPreBuffer: {
+				length: 0,
+				request: []
+			},
+			
+			// Tracks where we're at on a chain of requests
+			chainIndex: 0,
+			
 		},
 		
 		config = {
@@ -155,6 +165,8 @@
 									return this;
 									
 								case 'chain' :
+									global.chainIndex = parseInt( arguments[0] );
+									global.chainPreBuffer.length = global.chainIndex;
 									global.mode = 'chain';
 									return this;
 																		
@@ -254,8 +266,9 @@
 							var cleanArgs = [];
 							for ( var i = 0; i < aLen; i++ ) {
 								if ( ! jQuery.isFunction( args[i] ) ) {
-									if ( jQuery.isArray( args[i] )
-									&& args[i].length === 0 ) {
+									
+									// Use empty arrays as pointers to real data 
+									if ( jQuery.isArray( args[i] ) && args[i].length === 0 ) {
 										cleanArgs.push( global.data[0] );
 									} else {
 										cleanArgs.push( args[i] );
@@ -266,9 +279,77 @@
 							// Add function request to arguments
 							cleanArgs.unshift( fName );
 							
-							// Execute request
-							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
+							// Detect the second to last call to the chainIndex to know when to send a chain
+							if ( (global.chainIndex - 1) === 0 && global.chainPreBuffer.length > 0 ) {
+								
+								// Push the last request to be made onto the buffer and reset the index
+								global.chainPreBuffer['request'].push( cleanArgs );
+								global.chainIndex -= 1;
+
+								// Build a JSON block representing the chained request to be made
+								var jsonBlock = {};
+								
+								// Store a copy of each request to get access to references
+								var lastLiteralName = "";
+								for ( var i = 0; i < global.chainPreBuffer.length; i++ ) {				
+									
+									// The name to give our sub-object
+									var objLiteral = global.chainPreBuffer.request[i][0];
+									
+									// Reference to the last object literal name if there was one
+									var lastObjLiteral = "";
+									if ( i > 0 ) {
+										lastObjLiteral = lastLiteralName;
+									}
+									
+									lastLiteralName = objLiteral;
+									
+									// Remove the function request name from the array (it becomes
+									// the object literal that represents the function being requested
+									// and references its array of parameters). The result is building
+									// a blocking mode compatible JSON object of pseudo-code.
+									global.chainPreBuffer.request[i].shift();
+									
+									// Now we get references to pointers and construct new param array for
+									// a given function request.
+									var oldParams = global.chainPreBuffer.request[i];
+									var newParams = [];
+									for ( param in oldParams ) {
+										if ( typeof oldParams[param] === "undefined" ) {
+											var reference = "$" + lastObjLiteral.toString();
+											newParams.push( reference );
+										} else {
+											newParams.push( oldParams[param] );
+										}
+									}
+									
+									// Add a literal referenced object with its parameters
+									jsonBlock[ "$" + objLiteral ] = {};
+									jsonBlock[ "$" + objLiteral ][ objLiteral ] = newParams;
+								}
+								
+								// Execute delayed request chain methods
+								global.mode = 'block';
+								methods.call.apply( this, Array.prototype.slice.call( [jsonBlock] ));
+								
+								// Flush our pre buffer
+								global.chainPreBuffer.length = 0;
+								global.chainPreBuffer.request = [];
+
+								// At the end of a chain request where the method is called explicitly we
+								// return the data itself vs. the plugin.
+								this.returnData = global.data;
+								return this.returnData[0];
+								
+							} else if ( global.chainIndex > 0 ) {
+								
+								global.chainPreBuffer['request'].push( cleanArgs );
+								global.chainIndex -= 1;
+								return this;
+							}
 							
+							methods.call.apply( this, Array.prototype.slice.call( cleanArgs ));
+													
 							// Set data property before returning
 							this.returnData = global.data;
 							
@@ -331,7 +412,7 @@
 
 			// Holds our data object used in our XHR object
 			var passData = null;
-	
+
 			switch ( global.mode ) {
 					
 				case 'exec' :
@@ -387,7 +468,7 @@
 				data: passData,
 				dataType: "text",
 				success: function( data ) {
-					console.log(data);
+					
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
 					
