@@ -503,7 +503,7 @@
 				data: passData,
 				dataType: "text",
 				success: function( data ) {
-
+					
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
 					
