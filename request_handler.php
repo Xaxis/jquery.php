@@ -113,6 +113,16 @@ if ( $method_request ) {
 			}
 			break;
 		
+		// The block "method" handles requests to execute JSON blocks of PHP code
+		case 'block' :
+		
+			// Retrieve our JSON string and convert it to an array
+			$php_obj = $_POST['pobj'] ? json_decode( $_POST['pobj'] ) : false;
+				 
+			// Pass our JSON decoded PHP objects array to our execution handler
+			print parse_type( parse_php_object( $php_obj, $config ) );				 
+			break;
+			
 		// The exec "method" handles requests to execute PHP code strings
 		case 'exec' :
 			if ( $config['EXEC'] === true ) {
@@ -123,16 +133,6 @@ if ( $method_request ) {
 				 // Prefix our code with return to prevent NULL from being returned.
 				 echo parse_type( eval( $code_string ) );
 			} 
-			break;
-		
-		// The block "method" handles requests to execute JSON blocks of PHP code
-		case 'block' :
-		
-			// Retrieve our JSON string and convert it to an array
-			$php_obj = $_POST['pobj'] ? json_decode( $_POST['pobj'] ) : false;
-				 
-			// Pass our JSON decoded PHP objects array to our execution handler
-			print parse_type( parse_php_object( $php_obj, $config ) );				 
 			break;
 	}
 
@@ -203,6 +203,19 @@ function parse_php_object( $arr, $config ) {
 				}
 			}
 			
+			// Create our final cleaned array
+			$args_clean_arr = array();
+			
+			// Now we iterate over all the arguments in the new array and convert any JSON to arrays
+			foreach ( $args_arr as $arg ) {
+				
+				if ( json_decode( $arg ) !== NULL ) {
+					array_push( $args_clean_arr, json_decode( $arg ) );
+				} else {
+					array_push( $args_clean_arr, $arg );
+				}
+			}
+			
 			
 			// Based on the security mode selected, use either our blacklist or whitelist.
 			switch ( $config['SEC_MODE'] ) {
@@ -231,7 +244,7 @@ function parse_php_object( $arr, $config ) {
 				// Reassign our variable the returned value of a function call so that further function calls can
 				// search for the existence of pointers and then use the updated variable definitions. This logic
 				// takes advantage of the procedural nature of PHP and the order of the sub-blocks in the php object. 
-				${$k} = call_user_func_array( $func_name, $args_arr );
+				${$k} = call_user_func_array( $func_name, $args_clean_arr );
 			} else {
 				return ("Function you requested $func_name has been disabled by backend configuration.");
 			}
@@ -282,6 +295,12 @@ function parse_type( $data ) {
 			break;
 			
 		case is_array( $data ) :
+			(Array)$data;
+			$type = 'array';
+			break;
+			
+		case is_object( $data ) :
+			(Array)$data;
 			$type = 'array';
 			break;
 
