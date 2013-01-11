@@ -110,6 +110,8 @@ if ( $method_request ) {
 			if ( $function !== false ) {
 				$call = $function;
 				echo parse_type( call_user_func_array($call, $args_clean_arr) );
+			} else {
+				return ("Function you requested has been disabled by backend configuration.");
 			}
 			break;
 		
@@ -147,6 +149,28 @@ function object_to_array( &$object ) {
 		(Array)$object;
 	}
 }
+
+/**
+ * Searches multi dimensional arrays for the existence of a key.
+ * @param {index} An array key
+ * @param {array} The array to search
+ * @return {*} The value stored at the keyed index
+ */
+function array_key_search( $needle, $haystack ) {
+    $result = array_key_exists($needle, $haystack);
+    if ($result) {
+		return $result;
+	}
+    foreach ($haystack as $k => $v) {
+        if ( is_array($v) ) {
+            $result = array_key_search( $needle, $v );
+        }
+        if ($result) {
+			return $v[$needle];
+		}
+    }
+    return $result;	
+}
 	
 /**
  * Iterates over an array containing PHP and handles calls to enabled functions and executes them.
@@ -158,6 +182,11 @@ function parse_php_object( $arr, $config ) {
 	// We define a pointer array that contains reference names to parameter placeholders
 	// that will be replaced by real data.
 	$pointers = array();
+	
+	// We store a list of all PHP defined constants. We use this array to match against arguments
+	// sent from JavaScript that will naturally be in string form but are intended to represent 
+	// constants.
+	$constants = get_defined_constants(true);
 	
 	foreach ( $arr as $k => $v ) {
 		
@@ -209,13 +238,17 @@ function parse_php_object( $arr, $config ) {
 			// Now we iterate over all the arguments in the new array and convert any JSON to arrays
 			foreach ( $args_arr as $arg ) {
 				
-				if ( json_decode( $arg ) !== NULL ) {
-					array_push( $args_clean_arr, json_decode( $arg ) );
-				} else {
-					array_push( $args_clean_arr, $arg );
+				// At this point we test if a function argument is a literal. If it is we replace the
+				// literal string with its value.
+				if ( is_string( $arg ) ) {
+					$constant = array_key_search($arg, $constants);
+					if ( isset( $constant ) ) {
+						$arg = $constant;
+					}
 				}
+				
+				array_push( $args_clean_arr, $arg );
 			}
-			
 			
 			// Based on the security mode selected, use either our blacklist or whitelist.
 			switch ( $config['SEC_MODE'] ) {
@@ -245,6 +278,7 @@ function parse_php_object( $arr, $config ) {
 				// search for the existence of pointers and then use the updated variable definitions. This logic
 				// takes advantage of the procedural nature of PHP and the order of the sub-blocks in the php object. 
 				${$k} = call_user_func_array( $func_name, $args_clean_arr );
+
 			} else {
 				return ("Function you requested $func_name has been disabled by backend configuration.");
 			}
@@ -252,10 +286,22 @@ function parse_php_object( $arr, $config ) {
 		
 		// When we're not an object we're something else like an array, string, int, etc. If we're an array we need
 		// to recursively iterate over ourselves to convert any objects into arrays.
-		else {	
+		else {
+				
+			// Handle any recursive objects in arrays, cast them to arrays
 			if ( is_array( ${$k} ) ) {
 				array_walk_recursive( ${$k}, 'object_to_array' );
 			}
+			
+			// Handle any type casting of arrays and objects
+			if ( json_decode( ${$k} ) !== NULL ) {
+				${$k} = json_decode( ${$k} );
+				
+				if ( is_object( ${$k} ) ) {
+					${$k} = (Array)${$k};
+				}
+			}
+
 		}
 		
 	}
@@ -280,36 +326,37 @@ function parse_type( $data ) {
 			
 		case is_int( $data ) :
 			$type = 'int';
+			$data = (int)$data;
 			break;
 			
 		case is_float( $data ) :
 			$type = 'float';
+			$data = (float)$data;
 			break;
 			
 		case is_string( $data ) :
 			$type = 'string';
-			break;
-		
-		case is_object( $data ) :
-			$type = 'object';
+			$data = (string)$data;
 			break;
 			
 		case is_array( $data ) :
-			(Array)$data;
 			$type = 'array';
+			$data = (Array)$data;
 			break;
 			
 		case is_object( $data ) :
-			(Array)$data;
 			$type = 'array';
+			$data = (Array)$data;
 			break;
 
 		case is_bool( $data ) :
 			$type = 'bool';
+			$data = (bool)$data;
 			break;
 			
 		case is_null( $data ) :
 			$type = 'null';
+			$data = (unset)$data;
 			break;
 			
 		default :
