@@ -320,6 +320,13 @@
 									var oldParams = bufferCopy.request[i];
 									var newParams = [];
 									for ( param in oldParams ) {
+									
+										// Convert arrays to JSON encoded strings
+										if ( jQuery.type( oldParams[param] ) === "array" 
+												|| jQuery.isPlainObject( oldParams[param] ) ) {
+											var jsonArg = JSON.stringify( oldParams[param] );
+											oldParams[param] = jsonArg;
+										}
 										
 										// An empty array references the last return result
 										if ( typeof oldParams[param] === "undefined" ) {
@@ -367,7 +374,8 @@
 								// return the data itself vs. the plugin.
 								this.returnData = global.data;
 								return this.returnData[0];
-								
+							
+							// Add requests to the pre-buffer when the chainIndex is greater than 0	
 							} else if ( global.chainIndex > 0 ) {
 								
 								global.chainPreBuffer['request'].push( cleanArgs );
@@ -495,7 +503,7 @@
 				data: passData,
 				dataType: "text",
 				success: function( data ) {
-					
+
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
 					
