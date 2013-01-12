@@ -1,0 +1,36 @@
+{
+  "name": "php",
+	"version": "2.0.0-beta.1"
+	"title": "jQuery.php()",
+	"author": {
+		"name": "Wil Neeley",
+		"url": "https://github.com/Xaxis"
+	},
+	"licenses": [
+        {
+            "type": "MIT",
+            "url": "https://github.com/jquery/jquery-color/raw/2.0.0-beta.1/MIT-LICENSE.txt"
+        },
+        {
+            "type": "GPLv2",
+            "url": "https://github.com/jquery/jquery-color/raw/2.0.0-beta.1/GPL-LICENSE.txt"
+        }
+	],
+    "dependencies": {
+        "jquery": ">=1.6"
+    },
+    "description": "The main purpose of this plugin is to use PHP functions as methods of jQuery.php()",
+    "keywords": [
+        "php",
+        "rpc",
+        "ajax",
+        "javascript"
+    ],
+    "homepage": "https://github.com/Xaxis/jqueryphp",
+    "maintainers": [
+        {
+            "name": "Corey Frang",
+            "url": "https://github.com/gnarf37"
+        }
+    ]
+}
