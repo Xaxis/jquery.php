@@ -1,5 +1,5 @@
 /**
- * jquery.php v2.0
+ * jQuery.php v1.0.0
  * https://github.com/Xaxis/jqueryphp
  * Author: Wil Neeley (https://github.com/Xaxis)
  *
@@ -14,7 +14,7 @@
 		pluginName = "php",
 		
 		// Plugin version
-		pluginVersion = "2.0.0",
+		pluginVersion = "1.0.0",
 		
 		// Reference to the plugin
 		plugin = $.fn[pluginName],
@@ -152,7 +152,7 @@
 								aLen = args.length,
 								fName = curMethod;
 
-							// Reroute core plugin methods
+							// Proxy core plugin methods
 							switch ( fName ) {		
 								case 'bench' :
 									global.mode = 'bench';
@@ -283,8 +283,7 @@
 								// Copy the request chain buffer and work of it for no conflicts
 								var bufferCopy = global.chainPreBuffer;
 								
-								// Build a JSON block representing the chained request to be made
-								// !! - This is what we'll pass to the server.
+								// JSON block representing function requests to pass to the server
 								var jsonBlock = {};
 								
 								// Store a copy of each request to get access to references
@@ -497,12 +496,8 @@
 				dataType: "text",
 				success: function( data ) {
 					
-					console.log(data);
-					
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
-					
-					// Stores our returned results globally
 					global.data = parsedData;
 					
 					if ( $.fn[pluginName].useCallback === true ) {
