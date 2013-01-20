@@ -91,6 +91,11 @@ if ( $method_request ) {
 					break;
 			}
 			
+			// We store a list of all PHP defined constants. We use this array to match against arguments
+			// sent from JavaScript that will naturally be in string form but are intended to represent 
+			// constants.
+			$constants = get_defined_constants(true);
+	
 			// Convert our parameters string and convert it into an array
 			$args_arr = json_decode($func_args, false);
 			$args_clean_arr = array();
@@ -98,14 +103,30 @@ if ( $method_request ) {
 			// To play it safe we parse our arguments arrays into JSON. This allows users to pass
 			// JavaScript arrays or objects that we can use in PHP.
 			foreach ( $args_arr as $arg ) {
-				
+
+				// Handle any type casting of arrays and objects
 				if ( json_decode( $arg ) !== NULL ) {
-					array_push( $args_clean_arr, json_decode( $arg ) );
-				} else {
-					array_push( $args_clean_arr, $arg );
+					$arg = json_decode( $arg );
+					
+					if ( is_object( $arg ) ) {
+						$arg = (Array)$arg;
+					}
 				}
+				
+				// At this point we test if a function argument is a literal. If it is we replace the
+				// literal string with its value.
+				if ( is_string( $arg ) ) {
+					$constant = array_key_search($arg, $constants);
+					if ( isset( $constant ) ) {
+						$arg = $constant;
+					}
+				}
+				
+				array_push( $args_clean_arr, $arg );
 			}
-			 
+			
+			//print_r($args_clean_arr);
+			
 			// Call the requested function if permitted
 			if ( $function !== false ) {
 				$call = $function;
@@ -171,7 +192,7 @@ function array_key_search( $needle, $haystack ) {
     }
     return $result;	
 }
-	
+
 /**
  * Iterates over an array containing PHP and handles calls to enabled functions and executes them.
  * @param {phpObj} array A JSON decoded array of representational PHP.
@@ -201,7 +222,7 @@ function parse_php_object( $arr, $config ) {
 		
 			// Convert our function object to an array
 			$funcArr = (Array)${$k};
-			
+
 			// Use the first key of the function array as our function name to call
 			$func_name = array_keys($funcArr);
 			$func_name = $func_name[0];
@@ -235,8 +256,13 @@ function parse_php_object( $arr, $config ) {
 			// Create our final cleaned array
 			$args_clean_arr = array();
 			
-			// Now we iterate over all the arguments in the new array and convert any JSON to arrays
+			// Iterate over function parameters
 			foreach ( $args_arr as $arg ) {
+				
+				// Test if any function arguments are function calls themselves
+				print $arg;
+				if ( function_exists( $arg ) ) {
+				}
 				
 				// At this point we test if a function argument is a literal. If it is we replace the
 				// literal string with its value.
@@ -326,22 +352,18 @@ function parse_type( $data ) {
 			
 		case is_int( $data ) :
 			$type = 'int';
-			$data = (int)$data;
 			break;
 			
 		case is_float( $data ) :
 			$type = 'float';
-			$data = (float)$data;
 			break;
 			
 		case is_string( $data ) :
 			$type = 'string';
-			$data = (string)$data;
 			break;
 			
 		case is_array( $data ) :
 			$type = 'array';
-			$data = (Array)$data;
 			break;
 			
 		case is_object( $data ) :
@@ -351,12 +373,10 @@ function parse_type( $data ) {
 
 		case is_bool( $data ) :
 			$type = 'bool';
-			$data = (bool)$data;
 			break;
 			
 		case is_null( $data ) :
 			$type = 'null';
-			$data = (unset)$data;
 			break;
 			
 		default :

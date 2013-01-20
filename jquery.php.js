@@ -14,7 +14,7 @@
 		pluginName = "php",
 		
 		// Plugin version
-		pluginVersion = "2.0",
+		pluginVersion = "2.0.0",
 		
 		// Reference to the plugin
 		plugin = $.fn[pluginName],
@@ -209,14 +209,8 @@
 									
 								case 'repeat' :
 									$.each( global.chainBuffer.request, function(index, value) {
-
-										// Execute request
 										methods.call.apply( this, Array.prototype.slice.call( value ));
-										
-										// Set data property before returning
 										this.returnData = global.data;
-							
-										// Store our last request and data in buffer
 										global.chainBuffer.request.push( cleanArgs );
 										global.chainBuffer.data.push( this.returnData );
 									});
@@ -370,8 +364,7 @@
 								global.chainPreBuffer.length = 0;
 								global.chainPreBuffer.request = [];
 
-								// At the end of a chain request where the method is called explicitly we
-								// return the data itself vs. the plugin.
+								// Return the data itself instead of the plugin at end of chain
 								this.returnData = global.data;
 								return this.returnData[0];
 							
@@ -504,6 +497,8 @@
 				dataType: "text",
 				success: function( data ) {
 					
+					console.log(data);
+					
 					// Convert our returned string to the correct type
 					var parsedData = methods.type( data );
 					
@@ -511,7 +506,7 @@
 					global.data = parsedData;
 					
 					if ( $.fn[pluginName].useCallback === true ) {
-						global.callback( parsedData, global.selected );
+						global.callback( data, global.selected );
 					}
 					
 				}
