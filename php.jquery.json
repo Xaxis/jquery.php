@@ -1,6 +1,6 @@
 {
   "name": "php",
-	"version": "2.0.0-beta.1",
+	"version": "1.0.0",
 	"title": "jQuery.php()",
 	"author": {
 		"name": "Wil Neeley",
@@ -17,7 +17,7 @@
         }
 	],
     "dependencies": {
-	"jquery": ">=1.6"
+	"jquery": ">=1.8"
     },
     "description": "The main purpose of this plugin is to use PHP functions as methods of jQuery.php()",
     "keywords": [
