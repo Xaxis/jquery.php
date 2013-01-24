@@ -21,10 +21,7 @@
     },
     "description": "jQuery plugin for calling PHP functions as methods of jQuery.php within JavaScript.",
     "keywords": [
-        "php",
-        "rpc",
-        "ajax",
-        "javascript"
+        "php","rpc","ajax","event","jquery","rest","serialization"
     ],
     "homepage": "https://github.com/Xaxis/jqueryphp",
     "maintainers": [
