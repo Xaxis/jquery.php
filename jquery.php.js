@@ -1,9 +1,8 @@
 /**
- * jQuery.php v1.0.0
+ * jQuery.php v1.0.5
  * https://github.com/Xaxis/jqueryphp
  * Author: Wil Neeley (https://github.com/Xaxis)
- *
- * See the README file for documentation and usage information.
+ * Doc: http://www.williamneeley.com/code/jqueryphp/site/index.html
  *
  **/
 ;(function( $ ) {
@@ -14,7 +13,7 @@
 		pluginName = "php",
 		
 		// Plugin version
-		pluginVersion = "1.0.0",
+		pluginVersion = "1.0.5",
 		
 		// Reference to the plugin
 		plugin = $.fn[pluginName],
