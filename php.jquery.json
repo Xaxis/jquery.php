@@ -1,7 +1,11 @@
 {
 	"name": "php",
-	"version": "1.0.0",
 	"title": "jQuery PHP",
+	"version": "1.0.5",
+	"description": "At its core jQuery.php is a plugin for calling PHP functions as methods within JavaScript through a RPC style AJAX handler. It's a straightforward AJAX library with direct integration and mapping of most core PHP functions through JavaScript.",
+    "keywords": [
+        "php", "ajax", "rpc", "event", "jquery", "rest", "serialization"
+    ],
 	"author": {
 		"name": "Wil Neeley",
 		"url": "https://github.com/Xaxis"
@@ -10,20 +14,13 @@
         {
             "type": "MIT",
             "url": "https://github.com/jquery/jquery-color/raw/2.0.0-beta.1/MIT-LICENSE.txt"
-        },
-        {
-            "type": "GPLv2",
-            "url": "https://github.com/jquery/jquery-color/raw/2.0.0-beta.1/GPL-LICENSE.txt"
         }
 	],
     "dependencies": {
-        "jquery": ">=1.8"
+        "jquery": ">=1.7 <1.9"
     },
-    "description": "jQuery plugin for calling PHP functions as methods of jQuery.php within JavaScript.",
-    "keywords": [
-        "php","rpc","ajax","event","jquery","rest","serialization"
-    ],
-    "homepage": "https://github.com/Xaxis/jqueryphp",
+    "homepage": "http://www.williamneeley.com/code/jqueryphp/site/",
+	"doc": "http://www.williamneeley.com/code/jqueryphp/site/index.html#overview_ref"
     "maintainers": [
         {
             "name": "Wil Neeley",
