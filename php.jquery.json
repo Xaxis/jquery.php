@@ -4,7 +4,7 @@
 	"version": "1.0.5",
 	"description": "At its core jQuery.php is a plugin for calling PHP functions as methods within JavaScript through a RPC style AJAX handler. It's a straightforward AJAX library with direct integration and mapping of most core PHP functions through JavaScript.",
     "keywords": [
-        "php", "ajax", "rpc", "event", "jquery", "rest", "serialization"
+        "php", "ajax", "rpc", "DOM", "json", "event", "jquery", "rest", "serialization"
     ],
 	"author": {
 		"name": "Wil Neeley",
